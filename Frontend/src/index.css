@@ -233,3 +233,21 @@
 	color: #22d3ee; /* cyan-400 in dark */
 	text-shadow: 0 0 8px rgba(34, 211, 238, 0.45);
 }
+
+/* ===================== */
+/* 3D tilt card effect   */
+/* ===================== */
+.card-3d {
+	transform-style: preserve-3d;
+	transform: perspective(800px) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg)) translateZ(var(--elev, 0px));
+	transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.card-3d-active {
+	box-shadow: 0 12px 28px rgba(2, 6, 23, 0.2), 0 6px 14px rgba(2, 6, 23, 0.12);
+}
+.card-3d .card-3d-content {
+	transform: translateZ(20px);
+}
+.dark .card-3d-active {
+	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
+}

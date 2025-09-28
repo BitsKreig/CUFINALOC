@@ -144,6 +144,30 @@ export default function App() {
     el.scrollBy({ left: delta, behavior: "smooth" });
   };
 
+  // 3D tilt effect handlers for option cards
+  const onCardMouseEnter = (e) => {
+    const el = e.currentTarget;
+    el.classList.add("card-3d-active");
+  };
+  const onCardMouseMove = (e) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width; // 0..1
+    const py = (e.clientY - rect.top) / rect.height; // 0..1
+    const tiltX = (-(py - 0.5) * 10).toFixed(2) + "deg"; // rotateX up/down
+    const tiltY = ((px - 0.5) * 12).toFixed(2) + "deg"; // rotateY left/right
+    el.style.setProperty("--tiltX", tiltX);
+    el.style.setProperty("--tiltY", tiltY);
+    el.style.setProperty("--elev", "10px");
+  };
+  const onCardMouseLeave = (e) => {
+    const el = e.currentTarget;
+    el.classList.remove("card-3d-active");
+    el.style.setProperty("--tiltX", "0deg");
+    el.style.setProperty("--tiltY", "0deg");
+    el.style.setProperty("--elev", "0px");
+  };
+
   // Center a clicked timetable card within its horizontal container
   const centerCardInView = (container, card) => {
     if (!container || !card) return;
@@ -747,9 +771,12 @@ export default function App() {
                                             <div
                                               key={ttIdx}
                                               onClick={(e) => { e.stopPropagation(); centerCardInView(phaseScrollRef.current, e.currentTarget); }}
-                                              className="min-w-[40rem] card p-2 border border-ink-100 select-none"
+                                              className="min-w-[40rem] card card-3d p-2 border border-ink-100 select-none"
                                               role="button"
                                               tabIndex={0}
+                                              onMouseEnter={onCardMouseEnter}
+                                              onMouseMove={onCardMouseMove}
+                                              onMouseLeave={onCardMouseLeave}
                                             >
                                               <div className="font-semibold text-base mb-1 text-ink-800">
                                                 Option {tt.option}
