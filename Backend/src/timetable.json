@@ -1,1 +1,1 @@
-{"classrooms": 1, "batches": 1, "subjects": [{"name": "Math", "credits": 4}, {"name": "Science", "credits": 3}, {"name": "English", "credits": 3}, {"name": "History", "credits": 3}], "newSubject": "", "department": "Mathematics", "semester": 1, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 0}
+{"classrooms": 1, "batches": 3, "subjects": [{"name": "ab", "credits": 2}, {"name": "bc", "credits": 1}, {"name": "cd", "credits": 4}], "newSubject": "", "department": "Computer Science", "semester": 3, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 3}
