@@ -3,7 +3,7 @@ import useTheme from "./useTheme";
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import BackButton from "./components/BackButton";
+// Removed BackButton in favor of making the heading clickable as back
 
 export default function App() {
   const [formData, setFormData] = useState({
@@ -42,6 +42,15 @@ export default function App() {
   // Flags to prevent recursive scroll updates
   const hScrollIgnore = useRef(new WeakSet());
   const { theme, toggleTheme } = useTheme();
+
+  // Make the heading behave like a back button without changing its look
+  const goBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "/"; // fallback route
+    }
+  };
 
   const getBatchRef = (batch) => {
     if (!batchRefs.current[batch]) {
@@ -382,8 +391,19 @@ export default function App() {
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-ink-100">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <BackButton />
-            <h1 className="font-display text-2xl md:text-3xl tracking-tight">
+            <h1
+              className="font-display text-2xl md:text-3xl tracking-tight"
+              role="button"
+              tabIndex={0}
+              title="Go back"
+              onClick={goBack}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  goBack();
+                }
+              }}
+            >
               <span className="text-brand-700">Opti</span>
               <span className="bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent">Class</span>
             </h1>

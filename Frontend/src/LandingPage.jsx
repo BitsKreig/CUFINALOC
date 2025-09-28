@@ -1,18 +1,26 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import BackButton from "./components/BackButton";
 import useTheme from "./useTheme";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const handleLogout = () => {
+    try {
+      // Clear common auth artifacts if present
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('authToken');
+    } catch (_) {}
+    navigate('/');
+  };
   return (
     <div className="min-h-screen">
       {/* Top Bar */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-ink-100">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <BackButton />
+            <button className="btn-ghost text-sm" onClick={handleLogout} title="Log out">Logout</button>
             <h1 className="font-display text-2xl md:text-3xl tracking-tight">
               <span className="text-brand-700">Opti</span>
               <span className="bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent">Class</span>
