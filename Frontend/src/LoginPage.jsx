@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BackButton from "./components/BackButton";
 import useTheme from "./useTheme";
+import ThemeToggle from "./components/ThemeToggle";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -31,15 +32,8 @@ export default function LoginPage() {
               <span className="bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent">Class</span>
             </h1>
           </div>
-          <div className="flex items-center gap-2 text-sm text-ink-600">
-            <button
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              className="btn-ghost"
-              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-            >
-              {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-            </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle toggleTheme={toggleTheme} />
           </div>
         </div>
       </header>

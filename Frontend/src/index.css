@@ -117,6 +117,22 @@
 		color: #334155; /* text-ink-700 */
 		margin-bottom: 0.25rem; /* mb-1 */
 	}
+
+	/* Theme toggle (sun and moon) */
+	.theme-toggle {
+		display: inline-grid;
+		place-items: center;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 9999px;
+		background: transparent;
+		border: 1px solid transparent;
+		color: #0f172a; /* slate-900 */
+		transition: background-color 200ms ease, color 200ms ease;
+	}
+	.theme-toggle:hover { background-color: #f1f5f9; }
+	.dark .theme-toggle { color: #fde047; /* yellow-300 */ }
+	.dark .theme-toggle:hover { background-color: rgba(51,65,85,0.25); }
 }
 
 /* Clean, subtle scrollbars for supported browsers */

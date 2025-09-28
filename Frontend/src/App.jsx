@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import useTheme from "./useTheme";
+import ThemeToggle from "./components/ThemeToggle";
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -488,15 +489,8 @@ export default function App() {
               <span className="bg-gradient-to-r from-cyan-400 to-cyan-500 bg-clip-text text-transparent">Class</span>
             </h1>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-ink-600">
-            <button
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              className="btn-ghost"
-              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-            >
-              {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-            </button>
+          <div className="hidden sm:flex items-center gap-2">
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
           </div>
         </div>
       </header>

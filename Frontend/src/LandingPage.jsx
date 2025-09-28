@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useTheme from "./useTheme";
+import ThemeToggle from "./components/ThemeToggle";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -37,14 +38,7 @@ export default function LandingPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              className="btn-ghost text-sm"
-              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
-            >
-              {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-            </button>
+            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
             <nav className="hidden sm:flex items-center gap-3 text-sm">
               <Link to="/landing" className="btn-ghost">Home</Link>
               <button onClick={() => navigate('/app')} className="btn-primary">Open Scheduler</button>
