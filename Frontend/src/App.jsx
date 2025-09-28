@@ -30,13 +30,30 @@ export default function App() {
   });
   const [active, setActive] = useState("timetables");
 
-  const departments = [
+  // Default departments list; users can add more below
+  const defaultDepartments = [
     "Computer Science",
     "Electronics",
     "Mechanical",
     "Civil",
     "Management",
   ];
+  // Custom departments (persisted to localStorage)
+  const [customDepartments, setCustomDepartments] = useState([]);
+  const [addingDept, setAddingDept] = useState(false);
+  const [newDept, setNewDept] = useState("");
+  const allDepartments = React.useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    [...defaultDepartments, ...customDepartments].forEach((d) => {
+      const key = String(d).trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        out.push(String(d).trim());
+      }
+    });
+    return out;
+  }, [defaultDepartments, customDepartments]);
   const semesters = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
   const [timetables, setTimetables] = useState([]);
@@ -59,6 +76,29 @@ export default function App() {
   // Flags to prevent recursive scroll updates
   const hScrollIgnore = useRef(new WeakSet());
   const { theme, toggleTheme } = useTheme();
+
+  // Load any previously saved custom departments
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("customDepartments");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setCustomDepartments(parsed.filter((s) => typeof s === "string"));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const saveCustomDepartments = (list) => {
+    try {
+      localStorage.setItem("customDepartments", JSON.stringify(list));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // Make the heading behave like a back button without changing its look
   const goBack = () => {
@@ -621,12 +661,85 @@ export default function App() {
                   className="input w-full hover-lift"
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept, i) => (
+                  {allDepartments.map((dept, i) => (
                     <option key={i} value={dept}>
                       {dept}
                     </option>
                   ))}
                 </select>
+                <div className="mt-2">
+                  {!addingDept ? (
+                    <button
+                      type="button"
+                      className="btn-ghost inline-flex items-center gap-1 text-sm"
+                      onClick={() => setAddingDept(true)}
+                      title="Add department"
+                    >
+                      <PlusIcon />
+                      <span>Add department</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newDept}
+                        onChange={(e) => setNewDept(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const name = String(newDept).trim();
+                            if (!name) return;
+                            const exists = allDepartments.some(
+                              (d) => d.toLowerCase() === name.toLowerCase()
+                            );
+                            if (!exists) {
+                              const updated = [...customDepartments, name];
+                              setCustomDepartments(updated);
+                              saveCustomDepartments(updated);
+                            }
+                            setFormData((prev) => ({ ...prev, department: name }));
+                            setAddingDept(false);
+                            setNewDept("");
+                          }
+                        }}
+                        className="input flex-1"
+                        placeholder="Enter new department"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        onClick={() => {
+                          const name = String(newDept).trim();
+                          if (!name) return;
+                          const exists = allDepartments.some(
+                            (d) => d.toLowerCase() === name.toLowerCase()
+                          );
+                          if (!exists) {
+                            const updated = [...customDepartments, name];
+                            setCustomDepartments(updated);
+                            saveCustomDepartments(updated);
+                          }
+                          setFormData((prev) => ({ ...prev, department: name }));
+                          setAddingDept(false);
+                          setNewDept("");
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        onClick={() => {
+                          setAddingDept(false);
+                          setNewDept("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
