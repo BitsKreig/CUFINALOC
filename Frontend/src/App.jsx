@@ -32,6 +32,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  // Toast state for success popup
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastHiding, setToastHiding] = useState(false);
+  const toastTimerRef = useRef(null);
+  const toastHideTimerRef = useRef(null);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const batchRefs = useRef({});
   // Vertical scroll container refs per batch (for phase navigation)
@@ -85,6 +90,14 @@ export default function App() {
       hObservers.forEach((obs) => obs.disconnect());
     };
   }, [timetables]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (toastHideTimerRef.current) clearTimeout(toastHideTimerRef.current);
+    };
+  }, []);
 
   // (mobile drawer removed) 
 
@@ -349,9 +362,23 @@ export default function App() {
       }
 
       setTimetables(fetchedTimetables);
+      // Set success message (no emoji) and show toast with auto-dismiss
       setSuccess(
-        `✅ Successfully generated ${fetchedTimetables.length} optimized timetables with your custom subjects!`
+        `Successfully generated ${fetchedTimetables.length} optimized timetables with your custom subjects!`
       );
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      if (toastHideTimerRef.current) clearTimeout(toastHideTimerRef.current);
+      setToastHiding(false);
+      setToastVisible(true);
+      // Auto-hide after a short delay with a smooth exit animation
+      toastTimerRef.current = setTimeout(() => {
+        setToastHiding(true);
+        toastHideTimerRef.current = setTimeout(() => {
+          setToastVisible(false);
+          setToastHiding(false);
+          setSuccess(null);
+        }, 250); // match CSS transition duration
+      }, 2800);
     } catch (err) {
       console.error("Error in handleGenerate:", err);
       setError(err.message);
@@ -539,11 +566,42 @@ export default function App() {
             Generate Timetable
           </h2>
 
-          {success && (
-            <div className="card border-l-4 border-brand-500 p-4 text-sm reveal-y">
-              <p className="text-ink-800">
-                <span className="font-medium">Success:</span> {success}
-              </p>
+          {/* Success Toast Popup (no emoji) */}
+          {toastVisible && (
+            <div className="fixed top-4 right-4 z-30">
+              <div
+                role="status"
+                aria-live="polite"
+                className={`card border-l-4 border-brand-500 shadow-lg p-4 text-sm min-w-[18rem] transition-all duration-250 transform ${
+                  toastHiding ? 'opacity-0 translate-y-2 scale-[0.98]' : 'opacity-100 translate-y-0 scale-100'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-brand-600" aria-hidden>•</div>
+                  <div className="text-ink-800">
+                    <div className="font-medium mb-0.5">Success</div>
+                    <div>{success}</div>
+                  </div>
+                  <button
+                    type="button"
+                    className="ml-auto btn-ghost text-ink-500"
+                    onClick={() => {
+                      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                      if (toastHideTimerRef.current) clearTimeout(toastHideTimerRef.current);
+                      setToastHiding(true);
+                      toastHideTimerRef.current = setTimeout(() => {
+                        setToastVisible(false);
+                        setToastHiding(false);
+                        setSuccess(null);
+                      }, 250);
+                    }}
+                    title="Dismiss"
+                    aria-label="Dismiss notification"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
