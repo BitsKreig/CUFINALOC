@@ -4,6 +4,16 @@ import ThemeToggle from "./components/ThemeToggle";
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+  TrashIcon,
+  PlusIcon,
+  LayoutDashboardIcon,
+  CalendarIcon,
+  BuildingIcon,
+  CogIcon,
+  ChevronRightIcon,
+  CheckCircleIcon,
+} from "./components/Icons";
 // Removed BackButton in favor of making the heading clickable as back
 
 export default function App() {
@@ -521,35 +531,35 @@ export default function App() {
           </div>
           <nav>
             <ul className="space-y-2">
-              {["📊 Dashboard", "🗅 Timetables", "🏫 Classes", "⚙️ Settings"].map(
-                (item, idx) => {
-                  const parts = item.split(' ');
-                  const icon = parts[0] || '•';
-                  const label = parts.slice(1).join(' ');
-                  const key = label.toLowerCase();
-                  const isActive = active === key;
-                  return (
-                    <li key={idx}>
-                      <button
-                        onClick={() => setActive(key)}
-                        className={`w-full flex items-center gap-3 rounded-lg transition-colors px-3 py-2 ${
-                          sidebarExpanded ? 'justify-start' : 'justify-center'
-                        } ${
-                          isActive
-                            ? 'bg-brand-50 text-brand-700 border border-brand-100'
-                            : 'hover:bg-ink-100'
-                        }`}
-                        title={label}
-                      >
-                        <span className="text-xl" aria-hidden>{icon}</span>
-                        {sidebarExpanded && (
-                          <span className="whitespace-nowrap">{label}</span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                }
-              )}
+              {[
+                { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboardIcon },
+                { key: 'timetables', label: 'Timetables', Icon: CalendarIcon },
+                { key: 'classes', label: 'Classes', Icon: BuildingIcon },
+                { key: 'settings', label: 'Settings', Icon: CogIcon },
+              ].map(({ key, label, Icon }) => {
+                const isActive = active === key;
+                return (
+                  <li key={key}>
+                    <button
+                      onClick={() => setActive(key)}
+                      className={`w-full flex items-center gap-3 rounded-lg transition-colors px-3 py-2 ${
+                        sidebarExpanded ? 'justify-start' : 'justify-center'
+                      } ${
+                        isActive
+                          ? 'bg-brand-50 text-brand-700 border border-brand-100'
+                          : 'hover:bg-ink-100'
+                      }`}
+                      title={label}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <Icon className="text-xl" aria-hidden />
+                      {sidebarExpanded && (
+                        <span className="whitespace-nowrap">{label}</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         </aside>
@@ -571,7 +581,7 @@ export default function App() {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-brand-600" aria-hidden>•</div>
+                  <CheckCircleIcon className="text-brand-600 mt-0.5" />
                   <div className="text-ink-800">
                     <div className="font-medium mb-0.5">Success</div>
                     <div>{success}</div>
@@ -724,8 +734,9 @@ export default function App() {
                           onClick={() => handleRemoveSubject(idx)}
                           className="btn-ghost text-red-600 hover-lift"
                           title="Remove"
+                          aria-label="Remove subject"
                         >
-                          ❌
+                          <TrashIcon />
                         </button>
                         {!subj.finalized && (
                           <button
@@ -733,8 +744,9 @@ export default function App() {
                             onClick={() => handleAddSubject(idx)}
                             className="btn-ghost text-brand-700 hover-lift"
                             title="Add"
+                            aria-label="Add subject"
                           >
-                            ➕
+                            <PlusIcon />
                           </button>
                         )}
                       </div>
@@ -858,11 +870,12 @@ export default function App() {
                                         </span>
                                         <button
                                           type="button"
-                                            className="btn-ghost text-xs px-2 py-1 hover-lift"
+                                          className="btn-ghost text-xs px-2 py-1 hover-lift inline-flex items-center gap-1"
                                           onClick={() => handleNextOption(batchNum, phaseNum)}
                                           title="Next option"
                                         >
-                                          Next ›
+                                          <span>Next</span>
+                                          <ChevronRightIcon />
                                         </button>
                                       </div>
                                     </div>
