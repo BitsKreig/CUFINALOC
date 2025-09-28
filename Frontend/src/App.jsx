@@ -770,13 +770,13 @@ export default function App() {
                       onClick={downloadPDF}
                       className="btn bg-red-500 hover:bg-red-600 text-white hover-lift"
                     >
-                      ⬇️ PDF
+                      Download as PDF
                     </button>
                     <button
                       onClick={downloadExcel}
                       className="btn bg-brand-600 hover:bg-brand-700 text-white hover-lift"
                     >
-                      ⬇️ Excel
+                      Download as Excel
                     </button>
                   </div>
                 )}
