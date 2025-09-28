@@ -202,3 +202,34 @@
 		opacity: 0;
 	}
 }
+
+/* ===================== */
+/* Horizontal scroll UX  */
+/* ===================== */
+.hscroll-interactive {
+	position: relative;
+	cursor: none; /* hide default cursor */
+	-ms-overflow-style: none; /* IE/Edge hide scrollbar */
+	scrollbar-width: none; /* Firefox hide scrollbar */
+}
+.hscroll-interactive::after {
+	content: '';
+	position: absolute;
+	left: var(--cursor-x, -9999px);
+	top: var(--cursor-y, -9999px);
+	transform: translate(-50%, -50%);
+	font-weight: 800;
+	font-size: 28px; /* bigger arrows */
+	line-height: 1;
+	color: #0891b2; /* cyan-700-ish for visibility */
+	text-shadow: 0 0 6px rgba(14, 165, 233, 0.35);
+	pointer-events: none;
+	user-select: none;
+}
+.hscroll-interactive::-webkit-scrollbar {
+	display: none; /* Chrome/Safari/Opera hide scrollbar */
+}
+.dark .hscroll-interactive::after {
+	color: #22d3ee; /* cyan-400 in dark */
+	text-shadow: 0 0 8px rgba(34, 211, 238, 0.45);
+}

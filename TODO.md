@@ -1,5 +1,5 @@
-- [ ] Stage all changes with 'git add .'
-- [ ] Commit all changes with message 'Version 2'
-- [ ] Push the commit to origin main
-- [ ] Run 'git log --oneline -1' to verify the commit was created locally
-- [ ] Confirm push succeeded (check for errors in output)
+- [x] Stage all changes with 'git add .'
+- [x] Commit all changes with message 'Version 2'
+- [x] Push the commit to origin main
+- [x] Run 'git log --oneline -1' to verify the commit was created locally
+- [x] Confirm push succeeded (check for errors in output)

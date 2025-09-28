@@ -33,6 +33,14 @@ export default function App() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const batchRefs = useRef({});
+  // Vertical scroll container refs per batch (for phase navigation)
+  const vScrollRefs = useRef({});
+  // Phase item refs within a batch's vertical list
+  const phaseItemRefs = useRef({}); // { [batch]: { [phase]: ref } }
+  // Horizontal scroll refs per batch->phase to sync scrolling across phases
+  const hScrollRefs = useRef({}); // { [batch]: { [phase]: ref } }
+  // Flags to prevent recursive scroll updates
+  const hScrollIgnore = useRef(new WeakSet());
   const { theme, toggleTheme } = useTheme();
 
   const getBatchRef = (batch) => {
@@ -42,9 +50,116 @@ export default function App() {
     return batchRefs.current[batch];
   };
 
+  const getVScrollRef = (batch) => {
+    if (!vScrollRefs.current[batch]) {
+      vScrollRefs.current[batch] = React.createRef();
+    }
+    return vScrollRefs.current[batch];
+  };
+
+  const getPhaseItemRef = (batch, phase) => {
+    if (!phaseItemRefs.current[batch]) phaseItemRefs.current[batch] = {};
+    if (!phaseItemRefs.current[batch][phase]) {
+      phaseItemRefs.current[batch][phase] = React.createRef();
+    }
+    return phaseItemRefs.current[batch][phase];
+  };
+
+  const getHScrollRef = (batch, phase) => {
+    if (!hScrollRefs.current[batch]) hScrollRefs.current[batch] = {};
+    if (!hScrollRefs.current[batch][phase]) {
+      hScrollRefs.current[batch][phase] = React.createRef();
+    }
+    return hScrollRefs.current[batch][phase];
+  };
+
   const scrollToBatch = (batch) => {
     const el = batchRefs.current[batch]?.current;
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const scrollToPhase = (batch, phase) => {
+    const container = vScrollRefs.current[batch]?.current;
+    const target = phaseItemRefs.current[batch]?.[phase]?.current;
+    if (!container || !target) return;
+    // Compute target top relative to container
+    const targetTop = target.offsetTop - container.offsetTop;
+    container.scrollTo({ top: targetTop - 8, behavior: "smooth" });
+  };
+
+  // Sync horizontal scroll across all phases of the same batch using ratio
+  const onHorizontalScroll = (batch, phase, e) => {
+    const src = e.currentTarget;
+    if (hScrollIgnore.current.has(src)) return;
+    const maxSrc = Math.max(1, src.scrollWidth - src.clientWidth);
+    const ratio = src.scrollLeft / maxSrc;
+    const phases = hScrollRefs.current[batch] || {};
+    Object.entries(phases).forEach(([p, ref]) => {
+      const el = ref?.current;
+      if (!el || el === src) return;
+      const maxDst = Math.max(1, el.scrollWidth - el.clientWidth);
+      const dst = ratio * maxDst;
+      hScrollIgnore.current.add(el);
+      el.scrollLeft = dst;
+      // release ignore flag on next frame
+      requestAnimationFrame(() => hScrollIgnore.current.delete(el));
+    });
+  };
+
+  // Update custom cursor arrow and position in horizontal scroll areas
+  const onHScrollMouseMove = (e) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const dir = x < rect.width / 2 ? "<" : ">";
+    el.dataset.cursor = dir;
+    el.style.setProperty("--cursor-x", `${x}px`);
+    el.style.setProperty("--cursor-y", `${y}px`);
+  };
+
+  // Clear custom cursor when leaving the interactive area
+  const onHScrollMouseLeave = (e) => {
+    const el = e.currentTarget;
+    el.dataset.cursor = "";
+  };
+
+  // Click on empty space in scroller to scroll by direction
+  const onHScrollClick = (e) => {
+    // If a card handled the click, it will stop propagation, so we only handle true container clicks
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const step = Math.max(200, Math.floor(el.clientWidth * 0.8));
+    const delta = x < rect.width / 2 ? -step : step;
+    el.scrollBy({ left: delta, behavior: "smooth" });
+  };
+
+  // Center a clicked timetable card within its horizontal container
+  const centerCardInView = (container, card) => {
+    if (!container || !card) return;
+    const targetLeft = card.offsetLeft - (container.clientWidth - card.clientWidth) / 2;
+    container.scrollTo({ left: targetLeft, behavior: "smooth" });
+  };
+
+  // Scroll to and center the next option card in a phase scroller
+  const handleNextOption = (batch, phase) => {
+    const el = getHScrollRef(batch, phase)?.current;
+    if (!el) return;
+    const children = Array.from(el.children || []);
+    if (!children.length) return;
+    const currentLeft = el.scrollLeft;
+    // find the first card whose left edge is just ahead of current scroll
+    let nextCard = null;
+    for (const child of children) {
+      if (child.offsetLeft > currentLeft + 8) {
+        nextCard = child;
+        break;
+      }
+    }
+    // if none ahead, keep at last card
+    if (!nextCard) nextCard = children[children.length - 1];
+    centerCardInView(el, nextCard);
   };
 
   // Random color by subject string
@@ -555,8 +670,21 @@ export default function App() {
                                 {phases.length} phases
                               </div>
                             </div>
+                            {/* Phase Navigator */}
+                            <div className="flex gap-2 overflow-x-auto scrollbar pb-2 mb-2">
+                              {phases.map((p) => (
+                                <button
+                                  key={p}
+                                  onClick={() => scrollToPhase(batchNum, p)}
+                                  className="btn-ghost whitespace-nowrap"
+                                  title={`Go to Phase ${p}`}
+                                >
+                                  Phase {p}
+                                </button>
+                              ))}
+                            </div>
                             {/* Vertical scroll: Phases */}
-                            <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar">
+                            <div ref={getVScrollRef(batchNum)} className="max-h-[70vh] overflow-y-auto pr-2 scrollbar">
                               {phases.map((phaseNum) => {
                                 const phaseTimetables = batchTimetables
                                   .filter((tt) => tt.phase === phaseNum)
@@ -564,89 +692,90 @@ export default function App() {
                                     (a, b) => (a.option || 0) - (b.option || 0)
                                   );
                                 return (
-                                  <div key={phaseNum} className="mb-6">
+                                  <div key={phaseNum} ref={getPhaseItemRef(batchNum, phaseNum)} className="mb-6">
                                     <div className="flex items-center justify-between mb-2">
                                       <h5 className="text-base font-medium text-ink-700">
                                         Phase {phaseNum}
                                       </h5>
-                                      <span className="text-xs text-ink-500">
-                                        {phaseTimetables.length} options
-                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-ink-500">
+                                          {phaseTimetables.length} options
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="btn-ghost text-xs px-2 py-1"
+                                          onClick={() => handleNextOption(batchNum, phaseNum)}
+                                          title="Next option"
+                                        >
+                                          Next ›
+                                        </button>
+                                      </div>
                                     </div>
                                     {/* Horizontal scroll: Options */}
-                                    <div className="flex gap-5 overflow-x-auto pb-3 scrollbar">
-                                      {phaseTimetables.map((tt, ttIdx) => (
+                                    {(() => {
+                                      const phaseScrollRef = getHScrollRef(batchNum, phaseNum);
+                                      return (
                                         <div
-                                          key={ttIdx}
-                                          className="min-w-[28rem] card p-4 border border-ink-100"
+                                          ref={phaseScrollRef}
+                                          onScroll={(e) => onHorizontalScroll(batchNum, phaseNum, e)}
+                                          onMouseMove={onHScrollMouseMove}
+                                          onMouseLeave={onHScrollMouseLeave}
+                                          onClick={onHScrollClick}
+                                          className="hscroll-interactive flex gap-5 overflow-x-auto pb-2 scrollbar"
                                         >
-                                          <div className="font-semibold text-base mb-3 text-ink-800">
-                                            Option {tt.option}
-                                          </div>
-                                          {(tt.sectionsData || []).map(
-                                            (section, sIdx) => (
-                                              <div key={sIdx} className="mb-4 last:mb-0">
-                                                <div className="flex items-center justify-between mb-2">
-                                                  <h6 className="font-medium text-sm">
-                                                    {section.section}
-                                                  </h6>
-                                                </div>
-                                                <div className="overflow-x-auto">
-                                                  <table className="w-full text-center text-sm">
-                                                    <thead className="bg-ink-50">
-                                                      <tr>
-                                                        <th className="px-3 py-2.5 border border-ink-200">
-                                                          Mon
-                                                        </th>
-                                                        <th className="px-3 py-2.5 border border-ink-200">
-                                                          Tue
-                                                        </th>
-                                                        <th className="px-3 py-2.5 border border-ink-200">
-                                                          Wed
-                                                        </th>
-                                                        <th className="px-3 py-2.5 border border-ink-200">
-                                                          Thu
-                                                        </th>
-                                                        <th className="px-3 py-2.5 border border-ink-200">
-                                                          Fri
-                                                        </th>
-                                                      </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                      {(section.data || []).map(
-                                                        (row, rIdx) => (
-                                                          <tr
-                                                            key={rIdx}
-                                                            className="odd:bg-white even:bg-ink-50"
-                                                          >
-                                                            {row.map(
-                                                              (cell, cIdx) => (
-                                                                <td
-                                                                  key={cIdx}
-                                                                  className={`px-3 py-2.5 border border-ink-100 ${
-                                                                    cell
-                                                                      ? getRandomColor(
-                                                                          cell
-                                                                        )
-                                                                      : ""
-                                                                  }`}
-                                                                >
-                                                                  {cell || "-"}
-                                                                </td>
-                                                              )
-                                                            )}
-                                                          </tr>
-                                                        )
-                                                      )}
-                                                    </tbody>
-                                                  </table>
-                                                </div>
+                                          {phaseTimetables.map((tt, ttIdx) => (
+                                            <div
+                                              key={ttIdx}
+                                              onClick={(e) => { e.stopPropagation(); centerCardInView(phaseScrollRef.current, e.currentTarget); }}
+                                              className="min-w-[40rem] card p-2 border border-ink-100 select-none"
+                                              role="button"
+                                              tabIndex={0}
+                                            >
+                                              <div className="font-semibold text-base mb-1 text-ink-800">
+                                                Option {tt.option}
                                               </div>
-                                            )
-                                          )}
+                                              {(tt.sectionsData || []).map((section, sIdx) => (
+                                                <div key={sIdx} className="mb-2 last:mb-0">
+                                                  <div className="flex items-center justify-between mb-1">
+                                                    <h6 className="font-medium text-sm">
+                                                      {section.section}
+                                                    </h6>
+                                                  </div>
+                                                  <div className="overflow-x-auto">
+                                                    <table className="w-full text-center text-sm">
+                                                      <thead className="bg-ink-50">
+                                                        <tr>
+                                                          <th className="px-3 py-2 border border-ink-200">Mon</th>
+                                                          <th className="px-3 py-2 border border-ink-200">Tue</th>
+                                                          <th className="px-3 py-2 border border-ink-200">Wed</th>
+                                                          <th className="px-3 py-2 border border-ink-200">Thu</th>
+                                                          <th className="px-3 py-2 border border-ink-200">Fri</th>
+                                                        </tr>
+                                                      </thead>
+                                                      <tbody>
+                                                        {(section.data || []).map((row, rIdx) => (
+                                                          <tr key={rIdx} className="odd:bg-white even:bg-ink-50">
+                                                            {row.map((cell, cIdx) => (
+                                                              <td
+                                                                key={cIdx}
+                                                                className={`px-3 py-2 border border-ink-100 ${cell ? getRandomColor(cell) : ""}`}
+                                                              >
+                                                                {cell || "-"}
+                                                              </td>
+                                                            ))}
+                                                          </tr>
+                                                        ))}
+                                                      </tbody>
+                                                    </table>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          ))}
                                         </div>
-                                      ))}
-                                    </div>
+                                      );
+                                    })()}
+                                    {/* Close phase container */}
                                   </div>
                                 );
                               })}
