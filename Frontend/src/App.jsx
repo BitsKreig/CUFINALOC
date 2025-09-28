@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import useTheme from "./useTheme";
 import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
@@ -32,6 +32,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const batchRefs = useRef({});
   // Vertical scroll container refs per batch (for phase navigation)
   const vScrollRefs = useRef({});
@@ -51,6 +52,41 @@ export default function App() {
       window.location.href = "/"; // fallback route
     }
   };
+
+  // Scroll reveal animations for phases (vertical) and option cards (horizontal)
+  useEffect(() => {
+    // Vertical reveal for any element with .reveal-y
+    const vEls = Array.from(document.querySelectorAll('.reveal-y'));
+    const vObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) entry.target.classList.add('in-view');
+        else entry.target.classList.remove('in-view');
+      }
+    }, { root: null, threshold: 0.1 });
+    vEls.forEach((el) => vObserver.observe(el));
+
+    // Horizontal reveal per scroller
+    const hScrollers = Array.from(document.querySelectorAll('.hscroll-interactive'));
+    const hObservers = [];
+    for (const scroller of hScrollers) {
+      const cards = Array.from(scroller.querySelectorAll('.tt-card'));
+      const hObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) entry.target.classList.add('in-view');
+          else entry.target.classList.remove('in-view');
+        }
+      }, { root: scroller, threshold: 0.25, rootMargin: '0px' });
+      cards.forEach((el) => hObserver.observe(el));
+      hObservers.push(hObserver);
+    }
+
+    return () => {
+      vObserver.disconnect();
+      hObservers.forEach((obs) => obs.disconnect());
+    };
+  }, [timetables]);
+
+  // (mobile drawer removed) 
 
   const getBatchRef = (batch) => {
     if (!batchRefs.current[batch]) {
@@ -144,21 +180,14 @@ export default function App() {
     el.scrollBy({ left: delta, behavior: "smooth" });
   };
 
-  // 3D tilt effect handlers for option cards
+  // Subtle 3D hover effect handlers for option cards (clean, no cursor tracking)
   const onCardMouseEnter = (e) => {
     const el = e.currentTarget;
     el.classList.add("card-3d-active");
-  };
-  const onCardMouseMove = (e) => {
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width; // 0..1
-    const py = (e.clientY - rect.top) / rect.height; // 0..1
-    const tiltX = (-(py - 0.5) * 10).toFixed(2) + "deg"; // rotateX up/down
-    const tiltY = ((px - 0.5) * 12).toFixed(2) + "deg"; // rotateY left/right
-    el.style.setProperty("--tiltX", tiltX);
-    el.style.setProperty("--tiltY", tiltY);
-    el.style.setProperty("--elev", "10px");
+    // Keep tilt neutral for a clean look; add a slight elevation only
+    el.style.setProperty("--tiltX", "0deg");
+    el.style.setProperty("--tiltY", "0deg");
+    el.style.setProperty("--elev", "8px");
   };
   const onCardMouseLeave = (e) => {
     const el = e.currentTarget;
@@ -445,26 +474,56 @@ export default function App() {
         </div>
       </header>
 
-      <div className="container grid grid-cols-1 md:grid-cols-[16rem_1fr] gap-6 py-6">
+
+      <div className={`container grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 py-6`}>
         {/* Sidebar */}
-        <aside className="hidden md:block card h-fit md:sticky md:top-20 p-4">
+        <aside
+          className={`hidden md:block card h-fit md:sticky md:top-20 overflow-hidden transition-all duration-300 ${
+            sidebarExpanded ? 'w-64 p-4' : 'w-16 p-2'
+          }`}
+          aria-label="Sidebar navigation"
+          aria-expanded={sidebarExpanded}
+        >
+          <div className={`flex items-center ${sidebarExpanded ? 'justify-between' : 'justify-center'} mb-2`}>
+            {sidebarExpanded && (
+              <div className="font-semibold text-ink-700">Menu</div>
+            )}
+            <button
+              type="button"
+              className="btn-ghost text-lg"
+              aria-label={sidebarExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
+              title={sidebarExpanded ? 'Collapse' : 'Expand'}
+              onClick={() => setSidebarExpanded((v) => !v)}
+            >
+              {sidebarExpanded ? '«' : '»'}
+            </button>
+          </div>
           <nav>
             <ul className="space-y-2">
               {["📊 Dashboard", "🗅 Timetables", "🏫 Classes", "⚙️ Settings"].map(
                 (item, idx) => {
-                  const key = item.split(" ")[1].toLowerCase();
+                  const parts = item.split(' ');
+                  const icon = parts[0] || '•';
+                  const label = parts.slice(1).join(' ');
+                  const key = label.toLowerCase();
                   const isActive = active === key;
                   return (
                     <li key={idx}>
                       <button
                         onClick={() => setActive(key)}
-                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        className={`w-full flex items-center gap-3 rounded-lg transition-colors px-3 py-2 ${
+                          sidebarExpanded ? 'justify-start' : 'justify-center'
+                        } ${
                           isActive
-                            ? "bg-brand-50 text-brand-700 border border-brand-100"
-                            : "hover:bg-ink-100"
+                            ? 'bg-brand-50 text-brand-700 border border-brand-100'
+                            : 'hover:bg-ink-100'
                         }`}
+                        title={label}
                       >
-                        {item}
+                        <span className="text-xl" aria-hidden>{icon}</span>
+                        {sidebarExpanded && (
+                          <span className="whitespace-nowrap">{label}</span>
+                        )}
                       </button>
                     </li>
                   );
@@ -476,12 +535,12 @@ export default function App() {
 
         {/* Main Content */}
         <main className="space-y-6">
-          <h2 className="text-lg md:text-xl font-semibold text-ink-800">
+          <h2 className="text-lg md:text-xl font-semibold text-ink-800 reveal-y">
             Generate Timetable
           </h2>
 
           {success && (
-            <div className="card border-l-4 border-brand-500 p-4 text-sm">
+            <div className="card border-l-4 border-brand-500 p-4 text-sm reveal-y">
               <p className="text-ink-800">
                 <span className="font-medium">Success:</span> {success}
               </p>
@@ -489,7 +548,7 @@ export default function App() {
           )}
 
           {/* Form */}
-          <div className="card p-6 shadow-card">
+          <div className="card p-6 shadow-card reveal-y">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="label">Department</label>
@@ -497,7 +556,7 @@ export default function App() {
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="input w-full hover-lift"
                 >
                   <option value="">Select Department</option>
                   {departments.map((dept, i) => (
@@ -514,7 +573,7 @@ export default function App() {
                   name="semester"
                   value={formData.semester}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="input w-full hover-lift"
                 >
                   <option value="">Select Semester</option>
                   {semesters.map((sem, i) => (
@@ -533,7 +592,7 @@ export default function App() {
                   min="1"
                   value={formData.batches}
                   onChange={handleChange}
-                  className="input w-full"
+                  className="input w-full hover-lift"
                 />
               </div>
 
@@ -560,7 +619,7 @@ export default function App() {
                     }));
                   }}
                   placeholder="Enter number of subjects"
-                  className="input w-full"
+                  className="input w-full hover-lift"
                 />
 
                 <div className="mt-4 space-y-2">
@@ -585,7 +644,7 @@ export default function App() {
                           }
                         }}
                         disabled={subj.finalized}
-                        className="input col-span-7 md:col-span-8"
+              className="input col-span-7 md:col-span-8 hover-lift"
                       />
 
                       <input
@@ -604,14 +663,14 @@ export default function App() {
                           }
                         }}
                         disabled={subj.finalized}
-                        className="input col-span-3 md:col-span-2"
+                        className="input col-span-3 md:col-span-2 hover-lift"
                       />
 
                       <div className="col-span-2 md:col-span-2 flex items-center justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => handleRemoveSubject(idx)}
-                          className="btn-ghost text-red-600"
+                          className="btn-ghost text-red-600 hover-lift"
                           title="Remove"
                         >
                           ❌
@@ -620,7 +679,7 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => handleAddSubject(idx)}
-                            className="btn-ghost text-brand-700"
+                            className="btn-ghost text-brand-700 hover-lift"
                             title="Add"
                           >
                             ➕
@@ -634,7 +693,7 @@ export default function App() {
                 <button
                   onClick={handleGenerate}
                   disabled={loading}
-                  className="btn-primary mt-6 disabled:opacity-60"
+                  className="btn-primary mt-6 disabled:opacity-60 hover-lift"
                 >
                   {loading ? "Generating..." : "Generate Timetable"}
                 </button>
@@ -648,16 +707,16 @@ export default function App() {
                 )}
 
                 {timetables.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-3">
+                  <div className="mt-4 flex flex-wrap gap-3 reveal-y">
                     <button
                       onClick={downloadPDF}
-                      className="btn bg-red-500 hover:bg-red-600 text-white"
+                      className="btn bg-red-500 hover:bg-red-600 text-white hover-lift"
                     >
                       ⬇️ PDF
                     </button>
                     <button
                       onClick={downloadExcel}
-                      className="btn bg-brand-600 hover:bg-brand-700 text-white"
+                      className="btn bg-brand-600 hover:bg-brand-700 text-white hover-lift"
                     >
                       ⬇️ Excel
                     </button>
@@ -665,12 +724,12 @@ export default function App() {
                 )}
 
                 <div className="mt-10">
-                  <h3 className="text-lg font-semibold mb-3 text-ink-800">
+                  <h3 className="text-lg font-semibold mb-3 text-ink-800 reveal-y">
                     Optimized Timetables
                   </h3>
                   {/* Batch Navigator */}
                   {timetables.length > 0 && (
-                    <div className="card p-3 mb-4 sticky top-16 z-10">
+                    <div className="card p-3 mb-4 sticky top-16 z-10 reveal-y">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-ink-700">Jump to batch</span>
                       </div>
@@ -681,7 +740,7 @@ export default function App() {
                             <button
                               key={b}
                               onClick={() => scrollToBatch(b)}
-                              className="btn-ghost whitespace-nowrap"
+                              className="btn-ghost whitespace-nowrap hover-lift"
                               title={`Go to Batch ${b}`}
                             >
                               Batch {b}
@@ -704,7 +763,7 @@ export default function App() {
                             key={batchNum}
                             ref={getBatchRef(batchNum)}
                             id={`batch-${batchNum}`}
-                            className="card p-8 w-full"
+                            className="card p-8 w-full reveal-y"
                           >
                             <div className="flex items-center justify-between mb-3">
                               <h4 className="text-lg font-semibold">
@@ -720,7 +779,7 @@ export default function App() {
                                 <button
                                   key={p}
                                   onClick={() => scrollToPhase(batchNum, p)}
-                                  className="btn-ghost whitespace-nowrap"
+                                  className="btn-ghost whitespace-nowrap hover-lift"
                                   title={`Go to Phase ${p}`}
                                 >
                                   Phase {p}
@@ -736,8 +795,8 @@ export default function App() {
                                     (a, b) => (a.option || 0) - (b.option || 0)
                                   );
                                 return (
-                                  <div key={phaseNum} ref={getPhaseItemRef(batchNum, phaseNum)} className="mb-6">
-                                    <div className="flex items-center justify-between mb-2">
+                                  <div key={phaseNum} ref={getPhaseItemRef(batchNum, phaseNum)} className="mb-6 phase-block reveal-y">
+                                      <div className="flex items-center justify-between mb-2">
                                       <h5 className="text-base font-medium text-ink-700">
                                         Phase {phaseNum}
                                       </h5>
@@ -747,7 +806,7 @@ export default function App() {
                                         </span>
                                         <button
                                           type="button"
-                                          className="btn-ghost text-xs px-2 py-1"
+                                            className="btn-ghost text-xs px-2 py-1 hover-lift"
                                           onClick={() => handleNextOption(batchNum, phaseNum)}
                                           title="Next option"
                                         >
@@ -771,11 +830,10 @@ export default function App() {
                                             <div
                                               key={ttIdx}
                                               onClick={(e) => { e.stopPropagation(); centerCardInView(phaseScrollRef.current, e.currentTarget); }}
-                                              className="min-w-[40rem] card card-3d p-2 border border-ink-100 select-none"
+                                                className="min-w-[40rem] card card-3d tt-card reveal-x p-2 border border-ink-100 select-none hover-lift"
                                               role="button"
                                               tabIndex={0}
                                               onMouseEnter={onCardMouseEnter}
-                                              onMouseMove={onCardMouseMove}
                                               onMouseLeave={onCardMouseLeave}
                                             >
                                               <div className="font-semibold text-base mb-1 text-ink-800">

@@ -251,3 +251,52 @@
 .dark .card-3d-active {
 	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
 }
+
+/* ===================== */
+/* Scroll reveal effects  */
+/* ===================== */
+.reveal-y {
+	opacity: 0;
+	transform: translateY(14px);
+	transition: opacity 280ms ease, transform 320ms ease;
+}
+.reveal-y.in-view {
+	opacity: 1;
+	transform: translateY(0);
+}
+.reveal-x {
+	opacity: 0;
+	transform: translateX(18px) scale(0.98);
+	transition: opacity 260ms ease, transform 300ms ease;
+}
+.reveal-x.in-view {
+	opacity: 1;
+	transform: translateX(0) scale(1);
+}
+
+/* Utility reveal delay controlled by inline --delay var */
+.reveal-delay {
+	transition-delay: var(--delay, 0ms);
+}
+
+/* Hover micro-interactions */
+.hover-lift {
+	transition: transform 180ms ease, box-shadow 200ms ease;
+}
+.hover-lift:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 18px rgba(2, 6, 23, 0.12);
+}
+.dark .hover-lift:hover {
+	box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+/* Slow floating icons */
+@keyframes float-slow {
+	0% { transform: translateY(0); }
+	50% { transform: translateY(-4px); }
+	100% { transform: translateY(0); }
+}
+.float-slow {
+	animation: float-slow 3.2s ease-in-out infinite;
+}
