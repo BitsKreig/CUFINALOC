@@ -316,3 +316,44 @@
 .float-slow {
 	animation: float-slow 3.2s ease-in-out infinite;
 }
+html {
+  scrollbar-gutter: stable;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* === Reveal Animations === */
+.reveal-y {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  will-change: opacity, transform;
+}
+
+.reveal-y.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-x {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  will-change: opacity, transform;
+}
+
+.reveal-x.in-view {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Optional for smoother scrolling */
+html {
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+html {
+  scroll-behavior: smooth;
+}
