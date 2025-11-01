@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import useTheme, { ThemeProvider } from "../useTheme";
+import useTheme from "../useTheme";
 import {
   LayoutDashboardIcon,
   CalendarIcon,

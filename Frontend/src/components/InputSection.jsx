@@ -1,8 +1,5 @@
 import { TrashIcon, PlusIcon } from "./Icons";
-import useTheme, { ThemeProvider } from "../useTheme";
-
-const { theme, toggleTheme } = useTheme();
-
+import useTheme from "../useTheme";
 
 const InputSection = ({
   department,
@@ -14,6 +11,8 @@ const InputSection = ({
   setBatchCount,
   setSubjects,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   const departments = [
     "Computer Science",
     "CSE",
@@ -29,9 +28,7 @@ const InputSection = ({
   const handleNumSubjectsChange = (e) => {
     const num = Math.max(0, parseInt(e.target.value || "0", 10));
     const updated = Array.from({ length: num }).map((_, i) =>
-      subjects[i]
-        ? subjects[i]
-        : { name: "", credits: "", confirmed: false }
+      subjects[i] ? subjects[i] : { name: "", credits: "", confirmed: false }
     );
     setSubjects(updated);
   };
@@ -43,7 +40,7 @@ const InputSection = ({
     setSubjects(updated);
   };
 
-  // Confirm a subject (via + button or Enter)
+  // Confirm a subject
   const handleConfirmSubject = (index) => {
     const s = subjects[index];
     if (!s?.name?.trim() || !s?.credits?.toString().trim()) {
@@ -59,7 +56,7 @@ const InputSection = ({
     setSubjects(updated);
   };
 
-  // Handle pressing Enter inside any subject field
+  // Enter key confirm
   const handleKeyPress = (e, index) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -67,14 +64,14 @@ const InputSection = ({
     }
   };
 
-  // Remove a subject row
+  // Remove a subject
   const handleRemoveClick = (index) => {
     const updated = subjects.filter((_, i) => i !== index);
     setSubjects(updated);
   };
 
   return (
-    <div className="md:col-span-2 space-y-6 bg-white p-6 rounded-lg shadow-sm transition-colors duration-300">
+    <div className="md:col-span-2 space-y-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-lg shadow-sm transition-colors duration-300">
       {/* Department + Semester */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -82,7 +79,7 @@ const InputSection = ({
           <select
             value={department}
             onChange={(e) => setDepartment(e.target.value)}
-            className="input w-full"
+            className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md"
           >
             <option value="">Select Department</option>
             {departments.map((d) => (
@@ -98,7 +95,7 @@ const InputSection = ({
           <select
             value={semester}
             onChange={(e) => setSemester(e.target.value)}
-            className="input w-full"
+            className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md"
           >
             <option value="">Select Semester</option>
             {semesters.map((s) => (
@@ -121,7 +118,7 @@ const InputSection = ({
             onChange={(e) =>
               setBatchCount(Math.max(1, parseInt(e.target.value || "1", 10)))
             }
-            className="input w-full"
+            className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md"
           />
         </div>
 
@@ -132,7 +129,7 @@ const InputSection = ({
             min="0"
             value={subjects.length}
             onChange={handleNumSubjectsChange}
-            className="input w-full"
+            className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md"
           />
         </div>
       </div>
@@ -145,13 +142,13 @@ const InputSection = ({
             {subjects.map((subj, idx) => (
               <div
                 key={idx}
-                className={`grid grid-cols-12 gap-2 items-center p-2 rounded border ${
+                className={`grid grid-cols-12 gap-2 items-center p-2 rounded border transition-colors duration-300 ${
                   subj.confirmed
-                    ? "border-green-300 bg-green-50"
-                    : "border-gray-200"
+                    ? "border-green-300 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800"
                 }`}
               >
-                <div className="col-span-1 flex items-center justify-center text-sm text-gray-600">
+                <div className="col-span-1 flex items-center justify-center text-sm text-gray-600 dark:text-gray-300">
                   {idx + 1}
                 </div>
 
@@ -165,8 +162,8 @@ const InputSection = ({
                     onChange={(e) =>
                       updateSubjectField(idx, "name", e.target.value)
                     }
-                    className={`input w-full ${
-                      subj.confirmed ? "bg-gray-100 cursor-not-allowed" : ""
+                    className={`input w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md ${
+                      subj.confirmed ? "opacity-70 cursor-not-allowed" : ""
                     }`}
                   />
                 </div>
@@ -182,8 +179,8 @@ const InputSection = ({
                     onChange={(e) =>
                       updateSubjectField(idx, "credits", e.target.value)
                     }
-                    className={`input w-full ${
-                      subj.confirmed ? "bg-gray-100 cursor-not-allowed" : ""
+                    className={`input w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 transition-colors duration-300 rounded-md ${
+                      subj.confirmed ? "opacity-70 cursor-not-allowed" : ""
                     }`}
                   />
                 </div>
@@ -193,7 +190,7 @@ const InputSection = ({
                     type="button"
                     title="Remove subject"
                     onClick={() => handleRemoveClick(idx)}
-                    className="btn-ghost"
+                    className="btn-ghost text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-300"
                   >
                     <TrashIcon />
                   </button>
@@ -201,13 +198,11 @@ const InputSection = ({
                   <button
                     type="button"
                     title={
-                      subj.confirmed
-                        ? "Already confirmed"
-                        : "Confirm subject"
+                      subj.confirmed ? "Already confirmed" : "Confirm subject"
                     }
                     onClick={() => handleConfirmSubject(idx)}
                     disabled={subj.confirmed}
-                    className={`btn-ghost ${
+                    className={`btn-ghost text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300 ${
                       subj.confirmed ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >

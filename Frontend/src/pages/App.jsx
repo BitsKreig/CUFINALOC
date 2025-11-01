@@ -7,13 +7,14 @@ import SidebarHeader from "../components/SidebarHeader";
 import InputSection from "../components/InputSection";
 import ThemeToggle from "../components/ThemeToggle";
 
-// Functions (from appFunctions.js)
+// Functions
 import { scrollToSection } from "../components/appFunctions";
 
-// Theme hook (for ThemeToggle)
-import useTheme, { ThemeProvider } from "../useTheme";
+// Theme
+import { ThemeProvider } from "../useTheme";  // ✅ Only import ThemeProvider here
+import useTheme from "../useTheme";           // ✅ Keep the hook separate
 
-const App = () => {
+const AppContent = () => {  // ✅ Rename inner part so it can use the hook safely
   const [department, setDepartment] = useState("");
   const [semester, setSemester] = useState("");
   const [batchCount, setBatchCount] = useState(1);
@@ -21,9 +22,9 @@ const App = () => {
 
   const inputSectionRef = useRef(null);
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();  // ✅ works fine here, since wrapped below
 
-  // Generate timetable → builds payload exactly as backend expects
+  // Generate timetable
   const onGenerateTimetable = async () => {
     const payload = {
       batches: Number(batchCount) || 1,
@@ -91,5 +92,12 @@ const App = () => {
     </div>
   );
 };
+
+// ✅ Wrap the entire app in ThemeProvider
+const App = () => (
+  <ThemeProvider>
+    <AppContent />
+  </ThemeProvider>
+);
 
 export default App;

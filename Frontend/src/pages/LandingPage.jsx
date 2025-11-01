@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useTheme from "../useTheme";
 import ThemeToggle from "../components/ThemeToggle";
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -11,8 +12,7 @@ export default function LandingPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting)
-            entry.target.classList.add("in-view");
+          if (entry.isIntersecting) entry.target.classList.add("in-view");
           else entry.target.classList.remove("in-view");
         }
       },
@@ -25,19 +25,17 @@ export default function LandingPage() {
 
   const handleLogout = () => {
     try {
-      // Clear common auth artifacts if present
       localStorage.removeItem("authToken");
       localStorage.removeItem("user");
       sessionStorage.removeItem("authToken");
     } catch (_) {}
-
     navigate("/");
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
       {/* Top Bar */}
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-ink-100">
+      <header className="sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <h1 className="font-display text-2xl md:text-3xl tracking-tight">
@@ -52,19 +50,19 @@ export default function LandingPage() {
             <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
 
             <nav className="hidden sm:flex items-center gap-3 text-sm">
-              <Link to="/landing" className="btn-ghost">
+              <Link to="/landing" className="btn-ghost transition-colors duration-300">
                 Home
               </Link>
               <button
                 onClick={() => navigate("/app")}
-                className="btn-primary"
+                className="btn-primary transition-colors duration-300"
               >
                 Open Scheduler
               </button>
             </nav>
 
             <button
-              className="btn-ghost text-sm"
+              className="btn-ghost text-sm transition-colors duration-300"
               onClick={handleLogout}
               title="Log out"
             >
@@ -75,17 +73,17 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container py-14 md:py-20">
+      <section className="container py-14 md:py-20 transition-colors duration-300">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div>
             <h2
-              className="font-display text-3xl md:text-5xl leading-tight text-ink-900 reveal-y reveal-delay"
+              className="font-display text-3xl md:text-5xl leading-tight text-gray-900 dark:text-gray-100 reveal-y reveal-delay transition-colors duration-300"
               style={{ "--delay": "0ms" }}
             >
               Schedule smarter. Teach better.
             </h2>
             <p
-              className="mt-4 text-ink-600 text-base md:text-lg reveal-y reveal-delay"
+              className="mt-4 text-gray-700 dark:text-gray-300 text-base md:text-lg reveal-y reveal-delay transition-colors duration-300"
               style={{ "--delay": "80ms" }}
             >
               OptiClass generates optimized class timetables for your batches
@@ -94,7 +92,7 @@ export default function LandingPage() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <button
-                className="btn-primary hover-lift reveal-y reveal-delay"
+                className="btn-primary hover-lift reveal-y reveal-delay transition-colors duration-300"
                 style={{ "--delay": "140ms" }}
                 onClick={() => navigate("/app")}
               >
@@ -102,7 +100,7 @@ export default function LandingPage() {
               </button>
 
               <a
-                className="btn-ghost hover-lift reveal-y reveal-delay"
+                className="btn-ghost hover-lift reveal-y reveal-delay transition-colors duration-300"
                 style={{ "--delay": "180ms" }}
                 href="#features"
               >
@@ -112,67 +110,38 @@ export default function LandingPage() {
           </div>
 
           <div
-            className="card p-6 shadow-card reveal-x hover-lift"
+            className="card p-6 shadow-card reveal-x hover-lift bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-300"
             style={{ "--delay": "220ms" }}
           >
             <div className="space-y-3">
-              <div
-                className="flex items-center gap-3 reveal-y reveal-delay"
-                style={{ "--delay": "0ms" }}
-              >
-                <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 grid place-items-center float-slow">
-                  1
-                </div>
-                <div>
-                  <div className="font-medium">Define batches & phases</div>
-                  <div className="text-sm text-ink-600">
-                    Tell us how your classes are grouped.
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="flex items-center gap-3 reveal-y reveal-delay"
-                style={{ "--delay": "80ms" }}
-              >
+              {[
+                ["1", "Define batches & phases", "Tell us how your classes are grouped."],
+                ["2", "Add subjects & credits", "We optimize around your load."],
+                ["3", "Generate & export", "Share as PDF or Excel in one click."],
+              ].map(([num, title, body], i) => (
                 <div
-                  className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 grid place-items-center float-slow"
-                  style={{ animationDelay: "400ms" }}
+                  key={i}
+                  className="flex items-center gap-3 reveal-y reveal-delay transition-colors duration-300"
+                  style={{ "--delay": `${i * 80}ms` }}
                 >
-                  2
-                </div>
-                <div>
-                  <div className="font-medium">Add subjects & credits</div>
-                  <div className="text-sm text-ink-600">
-                    We optimize around your load.
+                  <div className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 grid place-items-center float-slow">
+                    {num}
+                  </div>
+                  <div>
+                    <div className="font-medium">{title}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {body}
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div
-                className="flex items-center gap-3 reveal-y reveal-delay"
-                style={{ "--delay": "160ms" }}
-              >
-                <div
-                  className="h-8 w-8 rounded-full bg-brand-100 text-brand-700 grid place-items-center float-slow"
-                  style={{ animationDelay: "800ms" }}
-                >
-                  3
-                </div>
-                <div>
-                  <div className="font-medium">Generate & export</div>
-                  <div className="text-sm text-ink-600">
-                    Share as PDF or Excel in one click.
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="container pb-16">
+      <section id="features" className="container pb-16 transition-colors duration-300">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
@@ -190,31 +159,31 @@ export default function LandingPage() {
           ].map((f, i) => (
             <div
               key={i}
-              className="card p-5 hover-lift reveal-y reveal-delay"
+              className="card p-5 hover-lift reveal-y reveal-delay bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 transition-colors duration-300"
               style={{ "--delay": `${i * 100}ms` }}
             >
-              <div className="text-brand-700 font-semibold mb-1">
-                {f.title}
+              <div className="text-brand-700 font-semibold mb-1">{f.title}</div>
+              <div className="text-gray-700 dark:text-gray-300 text-sm">
+                {f.body}
               </div>
-              <div className="text-ink-600 text-sm">{f.body}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="container pb-20">
-        <div className="card p-6 flex flex-col md:flex-row items-center justify-between gap-4 reveal-y hover-lift">
+      <section className="container pb-20 transition-colors duration-300">
+        <div className="card p-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 shadow-md transition-colors duration-300 hover-lift">
           <div>
-            <div className="font-display text-xl text-ink-900">
+            <div className="font-display text-xl text-gray-900 dark:text-gray-100 transition-colors duration-300">
               Ready to build your timetable?
             </div>
-            <div className="text-ink-600 text-sm">
+            <div className="text-gray-600 dark:text-gray-400 text-sm transition-colors duration-300">
               Jump into the scheduler and generate optimized plans.
             </div>
           </div>
           <button
-            className="btn-primary hover-lift"
+            className="btn-primary hover-lift transition-colors duration-300"
             onClick={() => navigate("/app")}
           >
             Open Scheduler
