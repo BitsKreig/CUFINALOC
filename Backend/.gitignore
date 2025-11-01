@@ -109,6 +109,8 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+timetable.json
+generated_timetable.json
 
 # Pyre type checker
 .pyre/
