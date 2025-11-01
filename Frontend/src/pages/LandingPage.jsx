@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import useTheme from "../useTheme";
 import ThemeToggle from "../components/ThemeToggle";
-
 export default function LandingPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();

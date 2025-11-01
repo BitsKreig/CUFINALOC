@@ -4,14 +4,17 @@ import LoginPage from "./pages/LoginPage";
 import LandingPage from "./pages/LandingPage";
 import App from "./pages/App";
 import Timetable from "./pages/Timetable";
+import { ThemeProvider } from "./useTheme";
 import "./index.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <Routes>
+      <ThemeProvider>
       <Route path="/" element={<LoginPage />} />
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/app" element={<App />} />
       <Route path="/timetable" element={<Timetable />} />
+      </ThemeProvider>
     </Routes>
   </BrowserRouter>
 );

@@ -1,6 +1,7 @@
 // TimeTable.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import useTheme from "../useTheme";
 
 const TimeTable = () => {
   const location = useLocation();

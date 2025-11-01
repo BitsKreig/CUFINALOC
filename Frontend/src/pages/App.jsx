@@ -11,7 +11,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import { scrollToSection } from "../components/appFunctions";
 
 // Theme hook (for ThemeToggle)
-import useTheme from "../useTheme";
+import useTheme, { ThemeProvider } from "../useTheme";
 
 const App = () => {
   const [department, setDepartment] = useState("");

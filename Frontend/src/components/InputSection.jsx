@@ -1,6 +1,8 @@
-// src/components/InputSection.jsx
-import React from "react";
 import { TrashIcon, PlusIcon } from "./Icons";
+import useTheme, { ThemeProvider } from "../useTheme";
+
+const { theme, toggleTheme } = useTheme();
+
 
 const InputSection = ({
   department,
