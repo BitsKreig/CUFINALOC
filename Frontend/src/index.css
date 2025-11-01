@@ -268,92 +268,69 @@
 	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45), 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
-/* ===================== */
-/* Scroll reveal effects  */
-/* ===================== */
-.reveal-y {
-	opacity: 0;
-	transform: translateY(14px);
-	transition: opacity 280ms ease, transform 320ms ease;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.reveal-y.in-view {
-	opacity: 1;
-	transform: translateY(0);
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
 }
-.reveal-x {
-	opacity: 0;
-	transform: translateX(18px) scale(0.98);
-	transition: opacity 260ms ease, transform 300ms ease;
+/* Fade In Slow Animation */
+@keyframes fadeInSlow {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
-.reveal-x.in-view {
-	opacity: 1;
-	transform: translateX(0) scale(1);
+.animate-fadeInSlow {
+  animation: fadeInSlow 1.2s ease-out;
 }
 
-/* Utility reveal delay controlled by inline --delay var */
-.reveal-delay {
-	transition-delay: var(--delay, 0ms);
+/* Glowing Pulse Animation */
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(56,189,248,0.6)); }
+  50% { filter: drop-shadow(0 0 14px rgba(56,189,248,0.9)); }
+}
+.glow-animate {
+  animation: glowPulse 2.5s infinite ease-in-out;
 }
 
-/* Hover micro-interactions */
-.hover-lift {
-	transition: transform 180ms ease, box-shadow 200ms ease;
+/* Floating Up/Down Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
-.hover-lift:hover {
-	transform: translateY(-2px);
-	box-shadow: 0 8px 18px rgba(2, 6, 23, 0.12);
+.float-animate {
+  animation: float 4s ease-in-out infinite;
+=======
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.dark .hover-lift:hover {
-	box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
 }
-
-/* Slow floating icons */
-@keyframes float-slow {
-	0% { transform: translateY(0); }
-	50% { transform: translateY(-4px); }
-	100% { transform: translateY(0); }
+/* Fade In Slow Animation */
+@keyframes fadeInSlow {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
-.float-slow {
-	animation: float-slow 3.2s ease-in-out infinite;
-}
-html {
-  scrollbar-gutter: stable;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* === Reveal Animations === */
-.reveal-y {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-  will-change: opacity, transform;
+.animate-fadeInSlow {
+  animation: fadeInSlow 1.2s ease-out;
 }
 
-.reveal-y.in-view {
-  opacity: 1;
-  transform: translateY(0);
+/* Glowing Pulse Animation */
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(56,189,248,0.6)); }
+  50% { filter: drop-shadow(0 0 14px rgba(56,189,248,0.9)); }
+}
+.glow-animate {
+  animation: glowPulse 2.5s infinite ease-in-out;
 }
 
-.reveal-x {
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-  will-change: opacity, transform;
+/* Floating Up/Down Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
-
-.reveal-x.in-view {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Optional for smoother scrolling */
-html {
-  scrollbar-gutter: stable;
-  scroll-behavior: smooth;
-}
-html {
-  scroll-behavior: smooth;
+.float-animate {
+  animation: float 4s ease-in-out infinite;
 }
