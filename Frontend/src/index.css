@@ -316,3 +316,36 @@
 .float-slow {
 	animation: float-slow 3.2s ease-in-out infinite;
 }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
+}
+/* Fade In Slow Animation */
+@keyframes fadeInSlow {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fadeInSlow {
+  animation: fadeInSlow 1.2s ease-out;
+}
+
+/* Glowing Pulse Animation */
+@keyframes glowPulse {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(56,189,248,0.6)); }
+  50% { filter: drop-shadow(0 0 14px rgba(56,189,248,0.9)); }
+}
+.glow-animate {
+  animation: glowPulse 2.5s infinite ease-in-out;
+}
+
+/* Floating Up/Down Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float-animate {
+  animation: float 4s ease-in-out infinite;
+}
