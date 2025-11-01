@@ -16,6 +16,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/app" element={<App />} />
         <Route path="/timetable" element={<Timetable />} />
+        <Route path="/register" element={<RegisterPage />} />
+
       </Routes>
     </BrowserRouter>
   </ThemeProvider>
