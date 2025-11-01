@@ -1,1 +1,1 @@
-{"batches": 1, "department": "CSE", "semester": 1, "subjects": [{"name": "Hindi", "credits": 2}, {"name": "engklis", "credits": 3}, {"name": "DSDJNC", "credits": 1}], "classrooms": 1, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 4}
+{"batches": 1, "department": "Computer Science", "semester": 1, "subjects": [{"name": "Hindi", "credits": 2}, {"name": "English", "credits": 3}], "classrooms": 1, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 4}
