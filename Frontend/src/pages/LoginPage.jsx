@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import BackButton from "./components/BackButton";
-import useTheme from "./useTheme";
-import ThemeToggle from "./components/ThemeToggle";
+import BackButton from "../components/BackButton";
+import useTheme from "../useTheme";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");

@@ -1,11 +1,16 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function BackButton({ fallback = "/landing", title = "Go back" }) {
+export default function BackButton({
+  fallback = "/landing",
+  title = "Go back",
+  className = "",
+}) {
   const navigate = useNavigate();
   const btnRef = useRef(null);
+
   const onClick = () => {
-    // ripple
+    // Ripple effect
     const btn = btnRef.current;
     if (btn) {
       const rect = btn.getBoundingClientRect();
@@ -18,6 +23,8 @@ export default function BackButton({ fallback = "/landing", title = "Go back" })
       btn.appendChild(ripple);
       setTimeout(() => ripple.remove(), 650);
     }
+
+    // Navigation logic
     try {
       if (window.history.length > 1) navigate(-1);
       else navigate(fallback);
@@ -33,10 +40,20 @@ export default function BackButton({ fallback = "/landing", title = "Go back" })
       onClick={onClick}
       aria-label={title}
       title={title}
-      className="ripple-parent inline-flex items-center justify-center h-9 w-9 rounded-full border border-ink-200 bg-white/70 dark:bg-slate-900/70 backdrop-blur hover:bg-ink-100 dark:hover:bg-ink-800 text-ink-700 dark:text-ink-200 transition-colors shadow-sm"
+      className={`ripple-parent inline-flex items-center justify-center h-9 w-9 
+        rounded-full border border-ink-200 bg-white/70 dark:bg-slate-900/70 
+        backdrop-blur hover:bg-ink-100 dark:hover:bg-ink-800 
+        text-ink-700 dark:text-ink-200 transition-colors shadow-sm 
+        ${className}`}
     >
-      {/* Left-pointing triangle */}
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      {/* Left Arrow */}
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
         <polygon points="15,6 9,12 15,18" />
       </svg>
     </button>
