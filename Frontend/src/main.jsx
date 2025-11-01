@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import LandingPage from "./pages/LandingPage";
 import App from "./pages/App";
 import Timetable from "./pages/Timetable";
