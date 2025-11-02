@@ -1,0 +1,17 @@
+table_name,column_name,data_type,description
+Departments,id,INTEGER (PK),Unique department ID
+Departments,name,VARCHAR(100),Name of the department
+Departments,code,VARCHAR(10),Department short code
+Subjects,id,INTEGER (PK),Unique subject ID
+Subjects,name,VARCHAR(100),Subject name
+Subjects,credits,INTEGER,Number of credits for the subject
+Subjects,department_id,INTEGER (FK),References Departments(id)
+Batches,id,INTEGER (PK),Unique batch ID
+Batches,name,VARCHAR(50),Batch name or code
+Batches,semester,INTEGER,Semester number
+Batches,department_id,INTEGER (FK),References Departments(id)
+Timetable,id,INTEGER (PK),Unique timetable ID
+Timetable,batch_id,INTEGER (FK),References Batches(id)
+Timetable,subject_id,INTEGER (FK),References Subjects(id)
+Timetable,day,VARCHAR(10),Day of the week
+Timetable,period,INTEGER,Period number in the day
