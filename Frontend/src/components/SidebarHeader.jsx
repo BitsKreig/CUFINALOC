@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import useTheme from "../useTheme";
-import ThemeToggle from "./ThemeToggle";
 import {
   LayoutDashboardIcon,
   CalendarIcon,
@@ -98,9 +97,6 @@ export default function SidebarHeader({
             </h1>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2">
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-          </div>
         </div>
       </header>
 

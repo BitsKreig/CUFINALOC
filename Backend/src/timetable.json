@@ -1,1 +1,1 @@
-{"batches": 3, "department": "CSE", "semester": 2, "subjects": [{"name": "a", "credits": 1}], "classrooms": 1, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 4}
+{"batches": 10, "department": "Computer Science", "semester": 1, "subjects": [{"name": "cdec", "credits": 4}, {"name": "cd", "credits": 2}, {"name": "bvjj", "credits": 3}, {"name": "n,b", "credits": 2}, {"name": "vgnv", "credits": 3}, {"name": "bhfcg", "credits": 2}, {"name": "nbm", "credits": 2}], "classrooms": 1, "classesPerWeek": 5, "maxLeaves": 0, "numSubjects": 4}

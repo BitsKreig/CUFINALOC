@@ -1,9 +1,12 @@
-// TimeTable.jsx
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import useTheme from "../useTheme";
+import ThemeToggle from "../components/ThemeToggle";
 
 const TimeTable = () => {
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+
   const payload =
     location.state?.payload ||
     JSON.parse(localStorage.getItem("timetableRequestPayload") || "{}");
@@ -35,11 +38,12 @@ const TimeTable = () => {
         const result = await response.json();
         if (result.error) throw new Error(result.error);
 
-        // Convert backend structure to frontend-friendly format
         const formattedPhases = Object.entries(result.grouped_timetables || {}).map(
           ([phaseName, batches]) => ({
             name: phaseName,
-            desc: `Generated for ${result.summary?.department || "Dept"} - ${result.summary?.semester || ""}`,
+            desc: `Generated for ${result.summary?.department || "Dept"} - ${
+              result.summary?.semester || ""
+            }`,
             options: Object.entries(batches || {}).map(([batchName, options]) => ({
               batch: batchName,
               score: "",
@@ -78,9 +82,9 @@ const TimeTable = () => {
   const renderTable = (days, tableData) => {
     const periods = timetableData?.meta?.periods_per_day || 6;
     return (
-      <table className="min-w-full border border-gray-300 mt-2 text-sm">
+      <table className="min-w-full border border-gray-300 dark:border-gray-700 mt-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg overflow-hidden transition-colors duration-300">
         <thead>
-          <tr className="bg-gray-100">
+          <tr className="bg-gray-100 dark:bg-gray-800 transition-colors duration-300">
             <th className="border px-3 py-2 text-left">Day</th>
             {Array.from({ length: periods }).map((_, i) => (
               <th key={i} className="border px-3 py-2 text-center">
@@ -94,11 +98,17 @@ const TimeTable = () => {
             const row = (tableData && tableData[day]) || Array.from({ length: periods }).map(() => null);
             return (
               <tr key={day}>
-                <td className="border px-3 py-2 font-medium bg-gray-50">{day}</td>
+                <td className="border px-3 py-2 font-medium bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
+                  {day}
+                </td>
                 {row.map((subject, idx) => (
                   <td
                     key={idx}
-                    className={`border px-3 py-2 text-center ${subject ? "text-gray-800" : "text-gray-300"}`}
+                    className={`border px-3 py-2 text-center transition-colors duration-300 ${
+                      subject
+                        ? "text-gray-800 dark:text-gray-100"
+                        : "text-gray-300 dark:text-gray-400"
+                    }`}
                   >
                     {subject || "-"}
                   </td>
@@ -112,26 +122,42 @@ const TimeTable = () => {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Loading generated timetable...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+        Loading generated timetable...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="p-8 text-center text-red-600">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-red-600 dark:text-red-400 transition-colors duration-300">
         <p>{error}</p>
       </div>
     );
   }
 
   if (!timetableData) {
-    return <div className="p-8 text-center">No timetable data available.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+        No timetable data available.
+      </div>
+    );
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <h1 className="text-2xl font-bold text-center">Generated Timetables</h1>
+    <div className="min-h-screen p-8 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      {/* Header Row: Centered Title + Theme Toggle on Right */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="w-6" /> {/* left spacer for symmetry */}
+        <h1 className="text-2xl font-bold text-center flex-1">
+          Generated Timetables
+        </h1>
+        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+      </div>
 
-      <div className="bg-gray-50 p-4 rounded-lg border">
+      {/* Summary Card */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md transition-colors duration-300">
         <p>
           <strong>Department:</strong> {timetableData.meta?.department}
         </p>
@@ -148,20 +174,30 @@ const TimeTable = () => {
 
       {/* --- PHASES --- */}
       {timetableData.phases.map((phase, phaseIndex) => (
-        <div key={phaseIndex} className="space-y-6 border-t pt-6">
+        <div
+          key={phaseIndex}
+          className="space-y-6 border-t border-gray-200 dark:border-gray-700 pt-6 transition-colors duration-300"
+        >
           <h2 className="text-xl font-semibold text-brand-700">
-            {phase.name.toUpperCase()} — <span className="text-gray-600 text-base">{phase.desc}</span>
+            {phase.name.toUpperCase()} —{" "}
+            <span className="text-gray-600 dark:text-gray-400 text-base transition-colors duration-300">
+              {phase.desc}
+            </span>
           </h2>
 
           {/* --- OPTIONS --- */}
           {phase.options.map((option, optionIndex) => (
-            <div key={optionIndex} className="border rounded-lg p-4 bg-white shadow-sm">
-              <p className="font-semibold text-gray-700 mb-2">
-                Option {optionIndex + 1} — Score: <span className="text-brand-700">{option.score}</span>
+            <div
+              key={optionIndex}
+              className="border border-gray-200 dark:border-gray-700 rounded-xl p-5 bg-white dark:bg-gray-800 shadow-sm transition-all duration-300"
+            >
+              <p className="font-semibold text-gray-700 dark:text-gray-200 mb-2 transition-colors duration-300">
+                Option {optionIndex + 1} — Score:{" "}
+                <span className="text-brand-700">{option.score}</span>
               </p>
 
               {/* Weekly counts */}
-              <div className="text-sm text-gray-600 mb-3">
+              <div className="text-sm mb-3 text-gray-700 dark:text-gray-300 transition-colors duration-300">
                 {option.weekly_counts.map((s, i) => (
                   <span key={i} className="mr-4">
                     {s.subject}: {s.weekly}/week
@@ -171,8 +207,10 @@ const TimeTable = () => {
 
               {/* --- SECTIONS --- */}
               {option.sections.map((section, sectionIndex) => (
-                <div key={sectionIndex} className="mt-3">
-                  <h4 className="font-medium mb-2">Section: {section.section}</h4>
+                <div key={sectionIndex} className="mt-3 transition-colors duration-300">
+                  <h4 className="font-medium mb-2 text-gray-800 dark:text-gray-200">
+                    Section: {section.section}
+                  </h4>
                   <div className="overflow-x-auto">
                     {renderTable(timetableData.meta.days, section.table)}
                   </div>

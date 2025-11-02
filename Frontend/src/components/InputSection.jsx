@@ -1,221 +1,198 @@
-// src/components/InputSection.jsx
-import React from "react";
+import { useEffect, useState } from "react";
 import { TrashIcon, PlusIcon } from "./Icons";
+import useTheme from "../useTheme";
 
 const InputSection = ({
-  department,
-  semester,
-  batchCount,
-  subjects,
-  setDepartment,
-  setSemester,
-  setBatchCount,
-  setSubjects,
+  setPayload, // parent can get final JSON for scheduler
 }) => {
-  const departments = [
-    "Computer Science",
-    "CSE",
-    "IT",
-    "ECE",
-    "EEE",
-    "ME",
-    "CE",
-  ];
-  const semesters = ["1", "2", "3", "4", "5", "6", "7", "8"];
+  const { theme } = useTheme();
 
-  // Adjust number of subject rows
-  const handleNumSubjectsChange = (e) => {
-    const num = Math.max(0, parseInt(e.target.value || "0", 10));
-    const updated = Array.from({ length: num }).map((_, i) =>
-      subjects[i]
-        ? subjects[i]
-        : { name: "", credits: "", confirmed: false }
-    );
-    setSubjects(updated);
-  };
+  // ---------- States ----------
+  const [departments, setDepartments] = useState([]);
+  const [semesters, setSemesters] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedCodes, setSelectedCodes] = useState([]);
 
-  // Update a field inside a subject
-  const updateSubjectField = (index, field, value) => {
-    const updated = [...subjects];
-    updated[index] = { ...(updated[index] || {}), [field]: value };
-    setSubjects(updated);
-  };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Confirm a subject (via + button or Enter)
-  const handleConfirmSubject = (index) => {
-    const s = subjects[index];
-    if (!s?.name?.trim() || !s?.credits?.toString().trim()) {
-      alert("Please fill both Subject Name and Credits before confirming.");
-      return;
-    }
-    const updated = [...subjects];
-    updated[index] = {
-      name: s.name.trim(),
-      credits: s.credits.trim(),
-      confirmed: true,
+  // ---------- Fetch Departments ----------
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch("http://localhost:5002/api/data/departments");
+        const data = await res.json();
+        setDepartments(data.departments || []);
+      } catch (err) {
+        console.error("Error fetching departments:", err);
+        setError("Failed to load departments.");
+      }
     };
-    setSubjects(updated);
-  };
+    fetchDepartments();
+  }, []);
 
-  // Handle pressing Enter inside any subject field
-  const handleKeyPress = (e, index) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleConfirmSubject(index);
+  // ---------- Fetch Semesters when Department Selected ----------
+  useEffect(() => {
+    if (!selectedDept) return;
+    const fetchSemesters = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5002/api/data/semesters?department=${selectedDept}`
+        );
+        const data = await res.json();
+        setSemesters(data.semesters || []);
+      } catch (err) {
+        console.error("Error fetching semesters:", err);
+        setError("Failed to load semesters.");
+      }
+    };
+    fetchSemesters();
+  }, [selectedDept]);
+
+  // ---------- Fetch Subjects based on Department + Semester ----------
+  useEffect(() => {
+    if (!selectedDept || !selectedSemester) return;
+    const fetchSubjects = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `http://localhost:5002/api/data/subjects?department=${selectedDept}&semester=${selectedSemester}`
+        );
+        const data = await res.json();
+        setSubjects(data.subjects || []);
+      } catch (err) {
+        console.error("Error fetching subjects:", err);
+        setError("Failed to load subjects.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubjects();
+  }, [selectedDept, selectedSemester]);
+
+  // ---------- Handle Subject Code Selection ----------
+  const handleCodeSelect = async (code) => {
+    if (selectedCodes.some((c) => c.code === code)) return; // avoid duplicates
+
+    try {
+      const res = await fetch(`http://localhost:5002/api/data/subject/${code}`);
+      const data = await res.json();
+
+      const subject = {
+        code: data.code,
+        name: data.name,
+        credits: data.credits,
+      };
+
+      setSelectedCodes((prev) => [...prev, subject]);
+    } catch (err) {
+      console.error("Error fetching subject details:", err);
     }
   };
 
-  // Remove a subject row
-  const handleRemoveClick = (index) => {
-    const updated = subjects.filter((_, i) => i !== index);
-    setSubjects(updated);
+  // ---------- Remove Subject ----------
+  const handleRemoveSubject = (code) => {
+    setSelectedCodes((prev) => prev.filter((s) => s.code !== code));
   };
 
+  // ---------- Send payload to parent ----------
+  useEffect(() => {
+    const payload = {
+      department: selectedDept,
+      semester: selectedSemester,
+      subjects: selectedCodes,
+    };
+    setPayload(payload);
+  }, [selectedDept, selectedSemester, selectedCodes]);
+
+  // ---------- UI ----------
   return (
-    <div className="md:col-span-2 space-y-6 bg-white p-6 rounded-lg shadow-sm transition-colors duration-300">
-      {/* Department + Semester */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="label">Department</label>
-          <select
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            className="input w-full"
-          >
-            <option value="">Select Department</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="label">Semester</label>
-          <select
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
-            className="input w-full"
-          >
-            <option value="">Select Semester</option>
-            {semesters.map((s) => (
-              <option key={s} value={s}>
-                Semester {s}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="space-y-6 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 rounded-lg shadow-sm transition-colors duration-300">
+      {/* --- Department --- */}
+      <div>
+        <label className="label font-medium">Department</label>
+        <select
+          value={selectedDept}
+          onChange={(e) => setSelectedDept(e.target.value)}
+          className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
+        >
+          <option value="">Select Department</option>
+          {departments.map((d) => (
+            <option key={d.id || d} value={d.name || d}>
+              {d.name || d}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Batches + Subjects Count */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="label">Number of Batches</label>
-          <input
-            type="number"
-            min="1"
-            value={batchCount}
-            onChange={(e) =>
-              setBatchCount(Math.max(1, parseInt(e.target.value || "1", 10)))
-            }
-            className="input w-full"
-          />
-        </div>
-
-        <div>
-          <label className="label">Number of Subjects</label>
-          <input
-            type="number"
-            min="0"
-            value={subjects.length}
-            onChange={handleNumSubjectsChange}
-            className="input w-full"
-          />
-        </div>
+      {/* --- Semester --- */}
+      <div>
+        <label className="label font-medium">Semester</label>
+        <select
+          value={selectedSemester}
+          onChange={(e) => setSelectedSemester(e.target.value)}
+          className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
+          disabled={!selectedDept}
+        >
+          <option value="">Select Semester</option>
+          {semesters.map((s) => (
+            <option key={s.id || s} value={s.value || s}>
+              Semester {s.value || s}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Subject List */}
-      {subjects.length > 0 && (
+      {/* --- Subject Codes --- */}
+      <div>
+        <label className="label font-medium">Add Subject Code</label>
+        <select
+          onChange={(e) => handleCodeSelect(e.target.value)}
+          className="input w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md"
+          disabled={!selectedSemester || loading}
+        >
+          <option value="">Select Subject Code</option>
+          {subjects.map((s) => (
+            <option key={s.code} value={s.code}>
+              {s.code} — {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* --- Selected Subjects List --- */}
+      {selectedCodes.length > 0 && (
         <div className="mt-4">
-          <h3 className="text-lg font-medium mb-2">Subjects</h3>
-          <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-            {subjects.map((subj, idx) => (
+          <h3 className="text-lg font-medium mb-2">Selected Subjects</h3>
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
+            {selectedCodes.map((subj, idx) => (
               <div
                 key={idx}
-                className={`grid grid-cols-12 gap-2 items-center p-2 rounded border ${
-                  subj.confirmed
-                    ? "border-green-300 bg-green-50"
-                    : "border-gray-200"
-                }`}
+                className="flex justify-between items-center p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
               >
-                <div className="col-span-1 flex items-center justify-center text-sm text-gray-600">
-                  {idx + 1}
+                <div>
+                  <p className="font-medium">{subj.name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Code: {subj.code} | Credits: {subj.credits}
+                  </p>
                 </div>
-
-                <div className="col-span-6">
-                  <input
-                    type="text"
-                    placeholder="Subject name"
-                    value={subj.name || ""}
-                    disabled={subj.confirmed}
-                    onKeyDown={(e) => handleKeyPress(e, idx)}
-                    onChange={(e) =>
-                      updateSubjectField(idx, "name", e.target.value)
-                    }
-                    className={`input w-full ${
-                      subj.confirmed ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                  />
-                </div>
-
-                <div className="col-span-3">
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="Credits"
-                    value={subj.credits || ""}
-                    disabled={subj.confirmed}
-                    onKeyDown={(e) => handleKeyPress(e, idx)}
-                    onChange={(e) =>
-                      updateSubjectField(idx, "credits", e.target.value)
-                    }
-                    className={`input w-full ${
-                      subj.confirmed ? "bg-gray-100 cursor-not-allowed" : ""
-                    }`}
-                  />
-                </div>
-
-                <div className="col-span-2 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    title="Remove subject"
-                    onClick={() => handleRemoveClick(idx)}
-                    className="btn-ghost"
-                  >
-                    <TrashIcon />
-                  </button>
-
-                  <button
-                    type="button"
-                    title={
-                      subj.confirmed
-                        ? "Already confirmed"
-                        : "Confirm subject"
-                    }
-                    onClick={() => handleConfirmSubject(idx)}
-                    disabled={subj.confirmed}
-                    className={`btn-ghost ${
-                      subj.confirmed ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    <PlusIcon />
-                  </button>
-                </div>
+                <button
+                  className="text-red-500 hover:text-red-400"
+                  onClick={() => handleRemoveSubject(subj.code)}
+                >
+                  <TrashIcon />
+                </button>
               </div>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="text-red-500 dark:text-red-400 text-sm mt-2">{error}</div>
       )}
     </div>
   );
