@@ -1,0 +1,6 @@
+flask
+flask-cors
+psycopg2-binary
+ortools
+python-dotenv
+requests

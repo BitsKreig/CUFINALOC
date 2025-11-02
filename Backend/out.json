@@ -1,0 +1,263 @@
+﻿{
+  "meta": {
+    "department": "CSE",
+    "semester": 5,
+    "batches": 2,
+    "periods_per_day": 6,
+    "days": ["Mon","Tue","Wed","Thu","Fri"]
+  },
+  "phases": [
+    {
+      "name": "phase1",
+      "desc": "Beginning of semester: strict, credit-heavy, 6-8 classes/day",
+      "options": [
+        {
+          "score": 120,
+          "weekly_counts": [{"subject":"DBMS","weekly":11}, {"subject":"OS","weekly":8}, {"subject":"ALGO","weekly":11}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["DBMS", "DBMS", "OS", "ALGO", "DBMS", "DBMS"],
+                "Tue": ["DBMS", "ALGO", "OS", "DBMS", "ALGO", "DBMS"],
+                "Wed": ["ALGO", "ALGO", "OS", "DBMS", "DBMS", "DBMS"],
+                "Thu": ["ALGO", "OS", "ALGO", "OS", "ALGO", "DBMS"],
+                "Fri": ["ALGO", "OS", "OS", "ALGO", "ALGO", "OS"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["OS", "ALGO", "ALGO", "DBMS", "OS", "DBMS"],
+                "Tue": ["OS", "ALGO", "ALGO", "OS", "DBMS", "ALGO"],
+                "Wed": ["DBMS", "DBMS", "OS", "ALGO", "DBMS", "DBMS"],
+                "Thu": ["OS", "ALGO", "OS", "DBMS", "ALGO", "DBMS"],
+                "Fri": ["ALGO", "ALGO", "DBMS", "ALGO", "OS", "DBMS"]
+              }
+            }
+          ]
+        },
+        {
+          "score": 150,
+          "weekly_counts": [{"subject":"DBMS","weekly":11}, {"subject":"OS","weekly":8}, {"subject":"ALGO","weekly":11}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["ALGO", "DBMS", "DBMS", "DBMS", "DBMS", "DBMS"],
+                "Tue": ["ALGO", "ALGO", "OS", "ALGO", "ALGO", "OS"],
+                "Wed": ["OS", "DBMS", "OS", "OS", "ALGO", "ALGO"],
+                "Thu": ["ALGO", "DBMS", "ALGO", "OS", "DBMS", "OS"],
+                "Fri": ["DBMS", "ALGO", "DBMS", "ALGO", "DBMS", "OS"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["OS", "ALGO", "OS", "ALGO", "DBMS", "ALGO"],
+                "Tue": ["OS", "ALGO", "OS", "ALGO", "ALGO", "OS"],
+                "Wed": ["DBMS", "ALGO", "DBMS", "DBMS", "DBMS", "OS"],
+                "Thu": ["ALGO", "ALGO", "DBMS", "ALGO", "DBMS", "DBMS"],
+                "Fri": ["DBMS", "ALGO", "OS", "OS", "DBMS", "DBMS"]
+              }
+            }
+          ]
+        },
+        {
+          "score": 150,
+          "weekly_counts": [{"subject":"DBMS","weekly":11}, {"subject":"OS","weekly":8}, {"subject":"ALGO","weekly":11}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["ALGO", "DBMS", "OS", "ALGO", "DBMS", "DBMS"],
+                "Tue": ["OS", "ALGO", "ALGO", "ALGO", "OS", "DBMS"],
+                "Wed": ["DBMS", "DBMS", "DBMS", "OS", "ALGO", "ALGO"],
+                "Thu": ["ALGO", "OS", "DBMS", "ALGO", "DBMS", "OS"],
+                "Fri": ["ALGO", "DBMS", "OS", "ALGO", "OS", "DBMS"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["ALGO", "DBMS", "DBMS", "OS", "ALGO", "OS"],
+                "Tue": ["ALGO", "ALGO", "DBMS", "ALGO", "ALGO", "ALGO"],
+                "Wed": ["ALGO", "DBMS", "DBMS", "DBMS", "DBMS", "OS"],
+                "Thu": ["DBMS", "OS", "OS", "ALGO", "ALGO", "DBMS"],
+                "Fri": ["OS", "DBMS", "OS", "ALGO", "OS", "DBMS"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "phase2",
+      "desc": "Mid semester: stress-light for events, 4-5 classes/day",
+      "options": [
+        {
+          "score": 134.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":9}, {"subject":"OS","weekly":6}, {"subject":"ALGO","weekly":8}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["DBMS", "ALGO", "ALGO", "DBMS", "DBMS", ""],
+                "Tue": ["DBMS", "", "OS", "OS", "DBMS", "DBMS"],
+                "Wed": ["OS", "OS", "ALGO", "", "ALGO", "DBMS"],
+                "Thu": ["ALGO", "ALGO", "", "OS", "ALGO", ""],
+                "Fri": ["", "DBMS", "DBMS", "", "OS", "ALGO"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["DBMS", "", "DBMS", "", "ALGO", "DBMS"],
+                "Tue": ["OS", "ALGO", "OS", "", "ALGO", "ALGO"],
+                "Wed": ["DBMS", "ALGO", "", "DBMS", "", "OS"],
+                "Thu": ["ALGO", "DBMS", "ALGO", "DBMS", "DBMS", ""],
+                "Fri": ["", "ALGO", "OS", "DBMS", "OS", "OS"]
+              }
+            }
+          ]
+        },
+        {
+          "score": 136.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":9}, {"subject":"OS","weekly":6}, {"subject":"ALGO","weekly":8}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["DBMS", "ALGO", "ALGO", "OS", "OS", ""],
+                "Tue": ["", "", "DBMS", "DBMS", "ALGO", "OS"],
+                "Wed": ["DBMS", "ALGO", "ALGO", "", "OS", "DBMS"],
+                "Thu": ["DBMS", "", "OS", "OS", "DBMS", "ALGO"],
+                "Fri": ["ALGO", "", "ALGO", "", "DBMS", "DBMS"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["", "ALGO", "DBMS", "ALGO", "ALGO", "DBMS"],
+                "Tue": ["OS", "", "OS", "", "DBMS", "OS"],
+                "Wed": ["ALGO", "OS", "", "", "DBMS", "ALGO"],
+                "Thu": ["ALGO", "ALGO", "OS", "DBMS", "", "DBMS"],
+                "Fri": ["OS", "DBMS", "", "ALGO", "DBMS", "DBMS"]
+              }
+            }
+          ]
+        },
+        {
+          "score": 144.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":9}, {"subject":"OS","weekly":6}, {"subject":"ALGO","weekly":8}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["", "DBMS", "OS", "ALGO", "DBMS", "DBMS"],
+                "Tue": ["ALGO", "OS", "", "ALGO", "OS", "ALGO"],
+                "Wed": ["DBMS", "", "OS", "OS", "", "OS"],
+                "Thu": ["ALGO", "ALGO", "DBMS", "DBMS", "", "DBMS"],
+                "Fri": ["ALGO", "", "DBMS", "ALGO", "DBMS", ""]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["", "ALGO", "OS", "DBMS", "", "DBMS"],
+                "Tue": ["", "ALGO", "", "ALGO", "DBMS", "OS"],
+                "Wed": ["DBMS", "DBMS", "ALGO", "OS", "", "OS"],
+                "Thu": ["DBMS", "", "OS", "ALGO", "DBMS", "DBMS"],
+                "Fri": ["ALGO", "ALGO", "ALGO", "DBMS", "", "OS"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "phase3",
+      "desc": "End semester: revision & prep, 2-3 classes/day",
+      "options": [
+        {
+          "score": 66.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":5}, {"subject":"OS","weekly":3}, {"subject":"ALGO","weekly":5}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["DBMS", "", "ALGO", "", "OS", ""],
+                "Tue": ["", "", "", "", "ALGO", "ALGO"],
+                "Wed": ["DBMS", "OS", "", "", "ALGO", ""],
+                "Thu": ["", "", "", "ALGO", "DBMS", "DBMS"],
+                "Fri": ["", "", "OS", "", "DBMS", ""]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["", "", "", "ALGO", "OS", "ALGO"],
+                "Tue": ["", "", "OS", "", "DBMS", ""],
+                "Wed": ["", "", "", "", "OS", "ALGO"],
+                "Thu": ["DBMS", "", "", "ALGO", "", "DBMS"],
+                "Fri": ["ALGO", "", "", "DBMS", "DBMS", ""]
+              }
+            }
+          ]
+        },
+        {
+          "score": 68.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":5}, {"subject":"OS","weekly":3}, {"subject":"ALGO","weekly":5}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["", "DBMS", "", "ALGO", "", ""],
+                "Tue": ["DBMS", "OS", "", "", "DBMS", ""],
+                "Wed": ["", "", "DBMS", "", "OS", "DBMS"],
+                "Thu": ["", "", "ALGO", "", "", "ALGO"],
+                "Fri": ["", "", "OS", "", "ALGO", "ALGO"]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["DBMS", "", "", "", "OS", ""],
+                "Tue": ["", "OS", "", "DBMS", "ALGO", ""],
+                "Wed": ["DBMS", "", "", "ALGO", "", "DBMS"],
+                "Thu": ["", "ALGO", "", "ALGO", "", ""],
+                "Fri": ["ALGO", "", "", "DBMS", "", "OS"]
+              }
+            }
+          ]
+        },
+        {
+          "score": 114.8,
+          "weekly_counts": [{"subject":"DBMS","weekly":5}, {"subject":"OS","weekly":3}, {"subject":"ALGO","weekly":5}],
+          "sections": [
+            {
+              "section": "CSE_5_A",
+              "table": {
+                "Mon": ["OS", "DBMS", "", "", "", ""],
+                "Tue": ["", "", "ALGO", "", "", "OS"],
+                "Wed": ["ALGO", "", "ALGO", "", "OS", ""],
+                "Thu": ["", "", "", "DBMS", "DBMS", "DBMS"],
+                "Fri": ["ALGO", "ALGO", "", "DBMS", "", ""]
+              }
+            },
+            {
+              "section": "CSE_5_B",
+              "table": {
+                "Mon": ["OS", "ALGO", "", "", "", "ALGO"],
+                "Tue": ["ALGO", "ALGO", "OS", "", "", ""],
+                "Wed": ["", "", "DBMS", "", "ALGO", "OS"],
+                "Thu": ["DBMS", "", "", "DBMS", "", ""],
+                "Fri": ["DBMS", "", "", "DBMS", "", ""]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

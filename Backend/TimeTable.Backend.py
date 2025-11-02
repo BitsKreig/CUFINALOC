@@ -1,276 +1,292 @@
+import os, json, subprocess
+import psycopg2
+import requests
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import the CORS library
-from uuid import uuid4
-import json
-import time
-import subprocess
+from flask_cors import CORS
+from dotenv import load_dotenv
+from ortools.sat.python import cp_model
 
-# --- Helper function to generate batch letters ---
-def get_batch_letters(num_batches):
-    """Generate batch letters: e.g., 3 → ['A', 'B', 'C']"""
-    return [chr(65 + i) for i in range(num_batches)]  # A=65 in ASCII
+# ------------------------------------------------------------
+#  ENV + APP SETUP
+# ------------------------------------------------------------
+load_dotenv()
 
-# Initialize the Flask application.
 app = Flask(__name__)
-# Enable CORS for all routes and all origins (including both 5173 and 5174)
-CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174"]}})
+CORS(app, resources={r"/api/*": {"origins": [
+    "http://localhost:5173","http://127.0.0.1:5173",
+    "http://localhost:5174","http://127.0.0.1:5174"
+]}})
 
-# --- In-Memory Data Storage (Temporary "Database") ---
-# In a real-world application, this data would be stored in a database.
-# We use a dictionary to simulate this for demonstration purposes.
-timetables = {}
+DB_DSN = os.getenv("DB_DSN", "postgresql://postgres:postgres@127.0.0.1:5432/tt")
+DEFAULT_P = int(os.getenv("PERIODS_PER_DAY", "6"))
+HF_URL = os.getenv("HF_URL", "").strip()
+DAY_NAME = ["Mon","Tue","Wed","Thu","Fri"]
 
-# --- Helper function to simulate the ML Model's behavior ---
-def run_ml_model(input_data):
-    """
-    Executes the C++ machine learning model for timetable generation.
-    It passes the input data as a JSON string to the C++ program's stdin
-    and reads the generated timetable data as json string from stdout.
-    """
-    print("Executing C++ model to generate timetable...")
+# ------------------------------------------------------------
+#  HELPERS
+# ------------------------------------------------------------
+def q(cur, sql, args=None):
+    cur.execute(sql, args or ())
+    return cur.fetchall()
 
-    import os
-    # Define the absolute path to the compiled C++ executable
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "src"))
-    cpp_executable = os.path.join(base_dir, "main.exe")  # Updated to use main_fixed_v2
+CPP_PATH = os.path.join(os.path.dirname(__file__), "bin", "timetable_generator.exe")
+if not os.path.exists(CPP_PATH):  # linux/mac fallback
+    CPP_PATH = os.path.join(os.path.dirname(__file__), "bin", "timetable_generator")
 
-    # Serialize the input data to a JSON string
-    input_json = json.dumps(input_data)
+# ------------------------------------------------------------
+#  C++ TEMPLATE INTERFACE
+# ------------------------------------------------------------
+def fetch_phase_inputs(cur, phase_num: int, P: int):
+    cur.execute("""SELECT subject_name, credits FROM subjects ORDER BY subject_id""")
+    subs = [{"name": s, "credits": int(c)} for (s, c) in cur.fetchall()]
+    if not subs:
+        subs = [{"name":"DBMS","credits":4},{"name":"OS","credits":3},{"name":"ALGO","credits":4}]
 
+    cur.execute("SELECT COUNT(*) FROM sections")
+    batches = cur.fetchone()[0] or 1
+
+    policy = {1:(6,8), 2:(4,5), 3:(2,3)}.get(phase_num, (4,5))
+
+    return {
+        "department": "CSE",
+        "semester": 5,
+        "batches": batches,
+        "semesterStart": "2025-07-15",
+        "semesterEnd":   "2025-12-05",
+        "periods_per_day": P,
+        "min_classes_per_day": policy[0],
+        "max_classes_per_day": policy[1],
+        "subjects": subs
+    }
+
+def call_cpp_phase_template(payload: dict) -> dict:
     try:
-        # Write input JSON to timetable.json in Backend/src
-        input_file_path = os.path.join(base_dir, "timetable.json")
-        with open(input_file_path, "w") as f:
-            f.write(input_json)
-
-        # Run the C++ executable with working directory set to Backend/src
-        result = subprocess.run(
-            [cpp_executable],
-            cwd=base_dir,
-            capture_output=True,
-            text=True,
-            input=input_json,
-            check=True  # This will raise a CalledProcessError if the C++ program returns a non-zero exit code
+        p = subprocess.run(
+            [CPP_PATH],
+            input=json.dumps(payload).encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True
         )
-
-        output_json = result.stdout
-        print("Raw output JSON from C++ program:", output_json)
-
-        # Parse the JSON output back into a Python dictionary
-        generated_timetables = json.loads(output_json)
-
-        print("Successfully received data from C++ model.")
-        return generated_timetables
-
-    except FileNotFoundError as e:
-        error_msg = f"Error: C++ executable not found at '{cpp_executable}'"
-        print(error_msg)
-        raise RuntimeError(error_msg) from e
+        return json.loads(p.stdout.decode("utf-8"))
     except subprocess.CalledProcessError as e:
-        error_msg = f"Error: C++ program failed with exit code {e.returncode}. Stderr: {e.stderr}"
-        print(error_msg)
-        raise RuntimeError(error_msg) from e
-    except json.JSONDecodeError as e:
-        error_msg = "Error: Failed to decode JSON output from C++ program."
-        print(error_msg)
-        raise RuntimeError(error_msg) from e
-    except Exception as e:
-        error_msg = f"An unexpected error occurred in run_ml_model: {e}"
-        print(error_msg)
-        raise RuntimeError(error_msg) from e
+        raise RuntimeError(f"C++ timetable_generator failed:\n{e.stderr.decode('utf-8','ignore')}")
 
-# --- API Endpoints ---
+def template_match_weight(template_json) -> dict:
+    want = {}
+    for sec in template_json.get("sections", []):
+        sname = sec["section"]
+        table = sec.get("table", {})
+        for d, day in enumerate(DAY_NAME):
+            row = table.get(day, []) or []
+            for p, subj in enumerate(row):
+                subj = (subj or "").strip()
+                if subj:
+                    want.setdefault((sname, d, p), set()).add(subj)
+    return want
 
+# ------------------------------------------------------------
+#  CORE BUILDER (DB + ORTOOLS + TEMPLATE + OPTIONAL ML)
+# ------------------------------------------------------------
+def build_schedule_with_template_and_ml(periods_per_day: int, phase: int = 1):
+    P = periods_per_day
+    conn = psycopg2.connect(DB_DSN)
+    cur = conn.cursor()
+
+    # DB fetches
+    sections = q(cur, "SELECT section_id, section_name FROM sections ORDER BY section_id")
+    if not sections: return {"status":"no_sections"}
+    section_by_id = {sid: sname for (sid,sname) in sections}
+
+    subjects = q(cur, "SELECT subject_id, subject_code, subject_name FROM subjects")
+    subj_by_id = {sid:(code,name) for (sid,code,name) in subjects}
+    if not subjects: return {"status":"no_subjects"}
+
+    demand = q(cur, """
+        SELECT section_id, subject_id, weekly_classes
+        FROM section_subject ORDER BY section_id, subject_id
+    """)
+    if not demand: return {"status":"no_demand_config"}
+
+    faculty = q(cur, "SELECT faculty_id, faculty_name FROM faculty")
+    fac_ids = [f[0] for f in faculty]
+    if not faculty: return {"status":"no_faculty"}
+
+    fac_sub = set(q(cur, "SELECT faculty_id, subject_id FROM faculty_subject"))
+
+    rooms = q(cur, "SELECT room_id, room_name FROM classrooms")
+    room_ids = [r[0] for r in rooms]
+    if not rooms: return {"status":"no_rooms"}
+
+    blocked = set(q(cur, "SELECT faculty_id, day_of_week, period_number FROM faculty_unavailable"))
+    cur_load = dict(q(cur, "SELECT faculty_id, COUNT(*) FROM timetable GROUP BY faculty_id"))
+
+    # C++ template
+    cpp_payload = fetch_phase_inputs(cur, phase, P)
+    cpp_json = call_cpp_phase_template(cpp_payload)
+    want = template_match_weight(cpp_json)
+
+    # OR-Tools vars
+    model = cp_model.CpModel()
+    x = {}
+    slot_list = []
+
+    for (sec_id, sub_id, weekly) in demand:
+        sec_name = section_by_id[sec_id]
+        subj_code, subj_name = subj_by_id[sub_id]
+        for fac in fac_ids:
+            if (fac, sub_id) not in fac_sub: continue
+            for d in range(5):
+                for p in range(P):
+                    if (fac, DAY_NAME[d], p) in blocked: continue
+                    for room in room_ids:
+                        key = (sec_id, sub_id, fac, room, d, p)
+                        x[key] = model.NewBoolVar(f"x_s{sec_id}_sub{sub_id}_f{fac}_r{room}_d{d}_p{p}")
+                        slot_list.append((key, sec_name, subj_name, d, p))
+    if not x: return {"status":"no_candidates"}
+
+    # constraints
+    by_sec_sub = {}
+    for key in x:
+        s, sub, *_ = key
+        by_sec_sub.setdefault((s, sub), []).append(key)
+    for (s, sub), keys in by_sec_sub.items():
+        w = next(w for (ss, su, w) in demand if ss == s and su == sub)
+        model.Add(sum(x[k] for k in keys) == w)
+
+    by_sec_slot = {}
+    for key in x:
+        sec, *_ , d, p = key
+        by_sec_slot.setdefault((sec, d, p), []).append(key)
+    for _, keys in by_sec_slot.items():
+        model.Add(sum(x[k] for k in keys) <= 1)
+
+    by_fac_slot = {}
+    for key in x:
+        _, _, fac, _, d, p = key
+        by_fac_slot.setdefault((fac, d, p), []).append(key)
+    for _, keys in by_fac_slot.items():
+        model.Add(sum(x[k] for k in keys) <= 1)
+
+    by_room_slot = {}
+    for key in x:
+        _, _, _, room, d, p = key
+        by_room_slot.setdefault((room, d, p), []).append(key)
+    for _, keys in by_room_slot.items():
+        model.Add(sum(x[k] for k in keys) <= 1)
+
+    # objective
+    alpha, beta = 1000, 1000
+    ml_scores = {}
+    if HF_URL:
+        slots_for_ml = []
+        for (key, sec_name, subj_name, d, p) in slot_list:
+            sec, sub, fac, room, dd, pp = key
+            slots_for_ml.append({
+                "faculty_id": fac, "subject_id": sub, "batch_id": sec,
+                "day": dd, "period": pp,
+                "current_week_load": int(cur_load.get(fac, 0)),
+                "max_load": 30, "recent_adjacent_same": 0, "historical_stress": 0.0
+            })
+        try:
+            r = requests.post(f"{HF_URL}/score", json={"slots": slots_for_ml}, timeout=45)
+            r.raise_for_status()
+            resp = r.json()
+            for i, (key, *_rest) in enumerate(slot_list):
+                ml_scores[key] = float(resp[i]["slot_score"])
+        except Exception:
+            ml_scores = {}
+
+    def w_template(sec_name, subj_name, d, p):
+        return 1.0 if subj_name in want.get((sec_name, d, p), set()) else 0.0
+
+    obj_terms = []
+    for (key, sec_name, subj_name, d, p) in slot_list:
+        tmatch = w_template(sec_name, subj_name, d, p)
+        ml     = ml_scores.get(key, 0.0)
+        weight = int(round(alpha * tmatch + beta * ml))
+        if weight != 0:
+            obj_terms.append(weight * x[key])
+    model.Maximize(sum(obj_terms) if obj_terms else 0)
+
+    solver = cp_model.CpSolver()
+    solver.parameters.max_time_in_seconds = 40.0
+    res = solver.Solve(model)
+    if res not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        return {"status":"no_solution"}
+
+    batches = {}
+    for key, var in x.items():
+        if solver.Value(var) == 1:
+            sec, sub, fac, room, d, p = key
+            subj_code, _ = subj_by_id[sub]
+            batches.setdefault(sec, {}).setdefault(d, [""]*P)
+            batches[sec][d][p] = f"{subj_code}/F{fac}/R{room}"
+
+    return {"status":"ok", "periods_per_day": P, "days": DAY_NAME, "batches": batches}
+
+# ------------------------------------------------------------
+#  MAP TO FRONTEND STRUCTURE
+# ------------------------------------------------------------
+def map_scheduler_to_grouped(sched_json, phase_label="phase1"):
+    grouped = {}
+    if sched_json.get("status") != "ok": return grouped
+    grouped[phase_label] = {}
+    days = sched_json.get("days", DAY_NAME)
+    for section_id, days_map in sched_json.get("batches", {}).items():
+        option = 1
+        section_name = f"SEC_{section_id}"
+        table_obj = {}
+        for d_idx, periods in days_map.items():
+            d_idx_int = int(d_idx)
+            day_name = days[d_idx_int] if 0 <= d_idx_int < len(days) else f"D{d_idx}"
+            table_obj[day_name] = periods
+        grouped[phase_label].setdefault(str(section_id), {})
+        grouped[phase_label][str(section_id)][option] = {
+            "id": f"{phase_label}_{section_id}_{option}",
+            "name": section_name,
+            "full_name": f"{section_name}_{phase_label}_Option{option}",
+            "sections": [{
+                "section": section_name,
+                "table": table_obj,
+                "phase": phase_label,
+                "timetable_option": option
+            }]
+        }
+    return grouped
+
+# ------------------------------------------------------------
+#  API ROUTES
+# ------------------------------------------------------------
 @app.route('/api/schedule/generate', methods=['POST'])
 def generate_timetable():
-    """
-    API endpoint to trigger the timetable generation with the new schema.
-    """
     try:
-        data = request.json
-        if not data:
-            return jsonify({"error": "Invalid JSON input. Please provide a request body."}), 400
+        data = request.json or {}
+        P = int(data.get("periods_per_day", DEFAULT_P))
+        phase = int(data.get("phase", 1))
 
-        # Ensure batches and semester are integers
-        if "batches" in data:
-            try:
-                data["batches"] = int(data["batches"])
-            except Exception:
-                data["batches"] = 1
-        else:
-            data["batches"] = 1
+        sched_out = build_schedule_with_template_and_ml(P, phase=phase)
+        grouped = map_scheduler_to_grouped(sched_out, phase_label=f"phase{phase}")
 
-        if "semester" in data:
-            try:
-                data["semester"] = int(data["semester"])
-            except Exception:
-                data["semester"] = 1
-        else:
-            data["semester"] = 1
-
-        # Set default parameters if missing
-        defaults = {
-            "classrooms": 1,
-            "subjects": ["Math", "Science", "English", "History"],
-            "department": "Computer Science",
-            "classesPerWeek": 5,
-            "maxLeaves": 0,
-            "numSubjects": 4,
+        summary = {
+            "department": data.get("department", "CSE"),
+            "semester": data.get("semester", 5),
+            "batches": list(grouped.get(f"phase{phase}", {}).keys()),
+            "num_phases": 1,
+            "options_per_batch": 1
         }
-        for key, value in defaults.items():
-            if key not in data or data[key] in [None, "", []]:
-                data[key] = value
-
-        # Special handling for subjects - preserve object structure for C++ compatibility
-        if "subjects" in data:
-            # Check if subjects array is empty or contains only empty objects
-            if not data["subjects"] or len(data["subjects"]) == 0:
-                data["subjects"] = defaults["subjects"]
-            else:
-                # Preserve the object structure with name and credits for C++ compatibility
-                processed_subjects = []
-                for subj in data["subjects"]:
-                    if isinstance(subj, dict) and "name" in subj:
-                        # Keep as object with name and credits
-                        processed_subjects.append({
-                            "name": subj["name"],
-                            "credits": subj.get("credits", 1)  # Default to 1 if credits not specified
-                        })
-                    elif isinstance(subj, str):
-                        # Convert string to object format
-                        processed_subjects.append({
-                            "name": subj,
-                            "credits": 1  # Default credits for string format
-                        })
-                    else:
-                        # Convert other formats to object
-                        processed_subjects.append({
-                            "name": str(subj),
-                            "credits": 1
-                        })
-                data["subjects"] = processed_subjects
-
-        generated_timetables = run_ml_model(data)
-
-        # Get input params for naming
-        department = data.get('department', 'Unknown')
-        semester = data.get('semester', 1)
-        num_batches = data.get('batches', 1)
-        batch_letters = get_batch_letters(num_batches)
-
-        # Group sections by phase, batch, option
-        grouped_timetables = {}  # {phase: {batch: {option: [sections]}}}
-
-        for phase_data in generated_timetables.get("phases", []):
-            phase_name = phase_data.get("name", "unknown")
-            grouped_timetables[phase_name] = {}
-
-            for option_idx, option in enumerate(phase_data.get("options", [])):
-                option_num = option_idx + 1  # 1-based
-
-                # Temporary dict to group sections by batch in this phase/option
-                temp_batch_sections = {letter: [] for letter in batch_letters}
-
-                for section in option.get("sections", []):
-                    section_copy = section.copy()
-                    section_copy['phase'] = phase_name
-                    section_copy['timetable_option'] = option_num
-
-                    # Parse batch from section name, e.g., "CSE_5_A_1" -> "A"
-                    section_name = section_copy.get('section', '')
-                    parts = section_name.split('_')
-                    parsed_batch = None
-                    if len(parts) >= 3:
-                        parsed_batch = parts[2]  # e.g., "A"
-
-                    # Map to expected batch letter (ensure we have sections for each batch)
-                    if parsed_batch in batch_letters:
-                        temp_batch_sections[parsed_batch].append(section_copy)
-                    else:
-                        # Fallback: Assign to first batch or log warning
-                        print(f"Warning: Unrecognized batch '{parsed_batch}' in section '{section_name}'")
-                        if batch_letters:
-                            temp_batch_sections[batch_letters[0]].append(section_copy)
-
-                # Now, for each batch in this phase/option, create a grouped timetable
-                for batch_letter in batch_letters:
-                    sections_for_batch = temp_batch_sections.get(batch_letter, [])
-                    if sections_for_batch:  # Only if sections exist
-                        # Create timetable name: e.g., "CSE_5_A"
-                        timetable_name = f"{department}_{semester}_{batch_letter}"
-                        full_key = f"{timetable_name}_Phase{phase_name}_Option{option_num}"
-
-                        # Group into one timetable object per batch/phase/option
-                        batch_timetable = {
-                            'name': timetable_name,
-                            'full_name': full_key,
-                            'phase': phase_name,
-                            'batch': batch_letter,
-                            'option': option_num,
-                            'sections': sections_for_batch  # List of all sections for this batch
-                        }
-
-                        # Store with UUID for retrieval, but use full_key as secondary ID
-                        timetable_id = str(uuid4())
-                        timetables[timetable_id] = batch_timetable
-
-                        # Add to grouped structure for response
-                        if batch_letter not in grouped_timetables[phase_name]:
-                            grouped_timetables[phase_name][batch_letter] = {}
-                        grouped_timetables[phase_name][batch_letter][option_num] = {
-                            'id': timetable_id,
-                            'name': timetable_name,
-                            'full_name': full_key,
-                            'sections': sections_for_batch
-                        }
-
-        # Collect all timetable IDs
-        timetable_ids = [opt['id'] for phase in grouped_timetables.values()
-                         for batch in phase.values()
-                         for opt in batch.values()
-                         if 'id' in opt]
-
-        print(f"Grouped timetables generated: {len(timetable_ids)} total, for {num_batches} batches across phases.")
-
-        # Return structured response for UI
-        response_data = {
-            "success": "Timetables generated successfully.",
-            "timetable_ids": timetable_ids,
-            "grouped_timetables": grouped_timetables,  # For direct UI display: {phase: {batch: {option: {id, name, sections}}}}
-            "summary": {
-                "department": department,
-                "semester": semester,
-                "batches": batch_letters,
-                "num_phases": len(grouped_timetables),
-                "options_per_batch": 3  # Assuming 3 options
-            }
-        }
-
-        return jsonify(response_data), 200
-
+        return jsonify({
+            "success": "ok" if sched_out.get("status") == "ok" else "fail",
+            "grouped_timetables": grouped,
+            "summary": summary
+        }), 200
     except Exception as e:
-        print(f"Error in generate_timetable endpoint: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/schedule/view/<timetable_id>', methods=['GET'])
-def get_timetable(timetable_id):
-    """
-    API endpoint to retrieve a specific timetable by its ID.
-    """
-    try:
-        print(f"Received request for timetable ID: {timetable_id}")
-        timetable = timetables.get(timetable_id)
-        if timetable:
-            print(f"Found timetable for ID: {timetable_id}")
-            return jsonify(timetable), 200
-        else:
-            print(f"Timetable not found for ID: {timetable_id}")
-            return jsonify({"error": "Timetable not found."}), 404
-    except Exception as e:
-        print(f"Error in get_timetable endpoint: {e}")
-        return jsonify({"error": str(e)}), 500
+@app.route('/api/health', methods=['GET'])
+def health():
+    return {"ok": True}
 
-# --- Application Runner ---
+# ------------------------------------------------------------
 if __name__ == '__main__':
-    # Run the Flask app in debug mode, binding to all interfaces.
     app.run(host='0.0.0.0', debug=True, port=5002)
